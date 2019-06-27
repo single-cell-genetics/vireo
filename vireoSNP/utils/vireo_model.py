@@ -22,8 +22,10 @@ def vireo_flock(AD, DP, n_donor=None, K_amplify=1, n_init=20, n_proc=1,
     if random_seed is not None:
         np.random.seed(random_seed)
 
-    print("[vireo] RUN1: %d random initializations..." %n_init)
     n_donor_run1 = round(n_donor * K_amplify)
+    print("[vireo] RUN1: %d random initializations for %d clusters..." 
+         %(n_init, n_donor_run1))
+         
     ID_prob_list = []
     for i in range(n_init):
         _ID_prob = np.random.rand(AD.shape[1], n_donor_run1)
@@ -48,30 +50,28 @@ def vireo_flock(AD, DP, n_donor=None, K_amplify=1, n_init=20, n_proc=1,
             verbose=False, check_doublet=False, **kwargs))
     
     LB_list = [x['LB_list'][-1] for x in result]
-    print("All lower bounds:", LB_list)
+    print("[vireo] RUN1 lower bound ranges: [%.1f, %.1f, %.1f]" 
+          %(min(LB_list), np.median(LB_list), max(LB_list)))
     
     res1 = result[np.argmax(LB_list)]
     _donor_cnt = np.sum(res1['ID_prob'], axis=0)
     _donor_idx = np.argsort(_donor_cnt)[::-1]
-    print("Lower bound:", res1['LB_list'][-1])
     print("\t".join(["donor%d" %x for x in _donor_idx]))
     print("\t".join(["%.0f" %_donor_cnt[x] for x in _donor_idx]))
     
     print(res1['theta_shapes'])
 
     ## second run
-    print(("[vireo] RUN2: Tuning the largest %d donors in RUN1 "
-           "as a start point" %n_donor))
+    print(("[vireo] RUN2: continue RUN1's best initial"))
     _ID_prob = res1['ID_prob'][:, _donor_idx[:n_donor]]
     _ID_prob[_ID_prob < 10**-10] = 10**-10
-    print(_ID_prob.shape)
     res1 = vireo_core(AD, DP, n_donor=n_donor, ID_prob_init=_ID_prob, 
                       **kwargs) #theta_init=res1['theta_shapes'], 
     _donor_cnt = np.sum(res1['ID_prob'], axis=0)
     _donor_idx = np.argsort(_donor_cnt)[::-1]
-    print("Lower bound:", res1['LB_list'][-1])
-    print("\t".join(["donor%d" %x for x in _donor_idx]))
-    print("\t".join(["%.0f" %_donor_cnt[x] for x in _donor_idx]))
+    # print("[vireo] RUN2 Lower bound:", res1['LB_list'][-1])
+    # print("\t".join(["donor%d" %x for x in _donor_idx]))
+    # print("\t".join(["%.0f" %_donor_cnt[x] for x in _donor_idx]))
     
     return res1
 
