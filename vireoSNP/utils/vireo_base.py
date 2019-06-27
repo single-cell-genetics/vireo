@@ -61,13 +61,11 @@ def get_ID_prob(AD, DP, GT_prob, theta_shapes, Psi=None):
                       S2 * digamma(theta_shapes[ig, 1]) - 
                       SS * digamma(np.sum(theta_shapes[ig, :])))
     
-    logLik_ID += np.log(Psi / np.sum(Psi))
-    logLik_vec = logsumexp(logLik_ID, axis=1)
-    
-    ID_prob = np.exp(loglik_amplify(logLik_ID, axis=1))
+    Psi_norm = np.log(Psi / np.sum(Psi))
+    ID_prob = np.exp(loglik_amplify(logLik_ID + Psi_norm, axis=1))
     ID_prob = tensor_normalize(ID_prob, axis=1)
     
-    return ID_prob, np.sum(logLik_vec)
+    return ID_prob, logLik_ID
     
 
 def get_GT_prob(AD, DP, ID_prob, theta_shapes, GT_prior=None):
@@ -96,7 +94,7 @@ def get_GT_prob(AD, DP, ID_prob, theta_shapes, GT_prior=None):
 
 
 
-def VB_lower_bound(logLik_GT, GT_prob, ID_prob, theta_shapes, 
+def VB_lower_bound(logLik_ID, GT_prob, ID_prob, theta_shapes, 
     theta_prior, GT_prior=None, Psi=None):
     """
     """
@@ -107,7 +105,7 @@ def VB_lower_bound(logLik_GT, GT_prob, ID_prob, theta_shapes,
     else:
         ID_prior = np.ones(ID_prob.shape) * np.log(Psi / np.sum(Psi))
         
-    LB_p = np.sum(logLik_GT * GT_prob) #+ sum(W_vec)
+    LB_p = np.sum(logLik_ID * ID_prob)
     LB_ID = np.sum(entropy(ID_prob.transpose(), ID_prior.transpose()))
     LB_GT = np.sum(entropy(GT_prob.transpose((1,0,2)), 
                            GT_prior.transpose((1,0,2))))
@@ -148,3 +146,60 @@ def beta_entropy(X, X_prior=None):
                (np.sum(X_prior[ii, :]) - 2) * digamma(np.sum(X[ii, :])))
         
     return RV1 - RV2
+
+
+def match(ref_ids, new_ids, uniq_ref_only=True):
+    """
+    Mapping new_ids to ref_ids. ref_ids can have repeated values, but new_ids 
+    can only have unique ids or values. Therefore, new_ids[RT_idx] will be 
+    the same as ref_ids. Note, 
+    
+    Parameters
+    ----------
+    ref_ids : array_like or list
+        ids for reference with type of int, float, or string
+    new_ids : array_like or list
+        ids waiting to map.
+        
+    Returns
+    -------
+    RV_idx : array_like, the same length of ref_ids
+        The index for new_ids mapped to ref_ids. If an id in ref_ids does not 
+        exist in new_ids, then return a None for that id. 
+    Examples
+    --------
+    >>> x1 = [5, 9, 1]
+    >>> x2 = [1, 2, 5, 7, 9]
+    >>> match(x1, x2)
+    array([2, 4, 0])
+    >>> match(x2, x1)
+    array([2, None, 0, None, 1], dtype=object)
+    >>> RT_idx = match(x2, x1)
+    >>> idx1 = numpy.where(RT_idx != None)[0]
+    >>> idx1
+    array([0, 2, 4])
+    >>> idx2 = RT_idx[idx1].astype(int)
+    >>> idx2
+    array([2, 0, 1])
+    """
+    idx1 = np.argsort(ref_ids)
+    idx2 = np.argsort(new_ids)
+    RT_idx1, RT_idx2 = [], []
+    
+    i, j = 0, 0
+    while i < len(idx1):
+        if j == len(idx2) or ref_ids[idx1[i]] < new_ids[idx2[j]]:
+            RT_idx1.append(idx1[i])
+            RT_idx2.append(None)
+            i += 1
+        elif ref_ids[idx1[i]] == new_ids[idx2[j]]:
+            RT_idx1.append(idx1[i])
+            RT_idx2.append(idx2[j])
+            i += 1
+            if uniq_ref_only: j += 1
+        elif ref_ids[idx1[i]] > new_ids[idx2[j]]:
+            j += 1
+            
+    origin_idx = np.argsort(RT_idx1)
+    RT_idx = np.array(RT_idx2)[origin_idx]
+    return RT_idx

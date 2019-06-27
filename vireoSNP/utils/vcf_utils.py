@@ -159,28 +159,92 @@ def read_sparse_GeneINFO(GenoINFO, keys=['AD', 'DP'], axes=[-1, -1]):
         RV[keys[i]] = csr_matrix((data, indices, indptr), shape=(N, M))
     return RV
 
+
 def GenoINFO_maker(GT_prob, AD_reads, DP_reads):
+    """
+    Generate the Genotype information for estimated genotype probability at
+    sample level.
+    """
+    GT_val = np.argmax(GT_prob, axis=1)
+    GT_prob[GT_prob < 10**(-10)] = 10**(-10)
+    PL_prob = np.round(-10 * np.log10(GT_prob)).astype(int).astype(str)
+    AD_reads = np.round(AD_reads).astype(int).astype(str)
+    DP_reads = np.round(DP_reads).astype(int).astype(str)
+
+    GT, PL, AD, DP = [], [], [], []
+    for i in range(GT_prob.shape[0]):
+        GT.append([['0/0', '1/0', '1/1'][x] for x in GT_val[i, :]])
+        PL.append([",".join(list(x)) for x in PL_prob[i, :, :].transpose()])
+        AD.append(list(AD_reads[i, :]))
+        DP.append(list(DP_reads[i, :]))
+    
     RV = {}
+    RV['GT'] = GT
+    RV['AD'] = AD
+    RV['DP'] = DP
+    RV['PL'] = PL
     return RV
 
 
-def write_VCF(out_file, VCF_dat):
-    # if out_file.endswith(".gz"):
-    #     out_file_use = out_file.split(".gz")[0]
-    # else:
-    #     out_file_use = out_file
+def write_VCF(out_file, VCF_dat, GenoTags=['GT', 'AD', 'DP', 'PL']):
+    if out_file.endswith(".gz"):
+        out_file_use = out_file.split(".gz")[0]
+    else:
+        out_file_use = out_file
         
-    # fid_out = open(out_file_use, "w")
-    # for line in VCF_dat['comments']:
-    #     fid_out.writelines(line + "\n")
+    fid_out = open(out_file_use, "w")
+    for line in VCF_dat['comments']:
+        fid_out.writelines(line + "\n")
     
-    # VCF_COLUMN = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", 
-    #               "INFO", "FORMAT"]
-    # fid_out.writelines("#" + "\t".join(VCF_COLUMN + VCF_dat['samples']) + "\n")
+    VCF_COLUMN = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", 
+                  "INFO", "FORMAT"]
+    fid_out.writelines("#" + "\t".join(VCF_COLUMN + VCF_dat['samples']) + "\n")
     
-    # GENO_tag = pppp
-    # for i in range(len(VCF_dat['variants'])):
-    #     line = [VCF_dat['FixedINFO'][x][i] for x in VCF_COLUMN[:8]]
-    #     line + ssss
+    for i in range(len(VCF_dat['variants'])):
+        line = [VCF_dat['FixedINFO'][x][i] for x in VCF_COLUMN[:8]]
+        line.append(":".join(GenoTags))
+
+        for d in range(len(VCF_dat['GenoINFO'][GenoTags[0]][0])):
+            _line_tag = [VCF_dat['GenoINFO'][x][i][d] for x in GenoTags]
+            line.append(":".join(_line_tag))
+        fid_out.writelines("\t".join(line) + "\n")
+    fid_out.close()
+
+    import shutil
+    if shutil.which("bgzip") is not None:
+        bashCommand = "bgzip -f %s" %(out_file_use)
+    else:
+        bashCommand = "gzip -f %s" %(out_file_use)
+    pro = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+    pro.communicate()[0]
+
     
-    return None
+def parse_donor_GPb(GT_dat, tag='GT'):
+    """
+    Parse the donor genotype probability
+    tag: GT, GP, or PL
+    """
+    def parse_GT_code(code, tag):
+        if code == ".":
+            return np.array([1/3, 1/3, 1/3])
+        if tag == 'GT':
+            _prob = np.array([0, 0, 0])
+            _prob[int(float(code[0]) + float(code[-1]))] = 1
+        elif tag == 'GP':
+            _prob = np.array(code.split(','), float)
+        elif tag == 'PL':
+            _prob = 10**(-0.1 * np.array(code.split(','), float) - 0.025) # 0?
+        else:
+            _prob = None
+        return _prob / np.sum(_prob)
+
+    if ['GT', 'GP', 'PL'].count(tag) == 0:
+        print("[parse_donor_GPb] Error: no support tag: %s" %tag)
+        return None
+
+    GT_prob = np.zeros((len(GT_dat), 3, len(GT_dat[0])))
+    for i in range(GT_prob.shape[0]):
+        for j in range(GT_prob.shape[2]):
+            GT_prob[i, :, j] = parse_GT_code(GT_dat[i][j], tag)
+
+    return GT_prob

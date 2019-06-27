@@ -27,8 +27,8 @@ def write_donor_id(out_dir, donor_names, cell_names, n_vars,
     for i in range(len(donor_ids_uniq)):
         fid.writelines("%s\t%d\n" %(donor_ids_uniq[i], donor_ids_count[i]))
     fid.close()
-    print("\n".join([donor_ids_uniq[x] + "\t" + str(donor_ids_count[x]) 
-                     for x in range(len(donor_ids_uniq))]))
+    print("\t".join([str(x) for x in donor_ids_uniq]))
+    print("\t".join([str(x) for x in donor_ids_count]))
 
     ## save donor_ids file
     fid = open(out_dir + "/donor_ids.tsv", "w")

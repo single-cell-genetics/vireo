@@ -11,9 +11,10 @@ import multiprocessing
 from optparse import OptionParser, OptionGroup
 
 from .version import __version__
-from .utils.vireo_model import vireo_core
+from .utils.vireo_base import match
+from .utils.vireo_model import vireo_core, vireo_flock
 from .utils.io_utils import write_donor_id
-from .utils.vcf_utils import load_VCF, write_VCF
+from .utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
 from .utils.vcf_utils import read_sparse_GeneINFO, GenoINFO_maker
 
 
@@ -29,21 +30,25 @@ def main():
     # parse command line options
     parser = OptionParser()
     parser.add_option("--cellFile", "-c", dest="cell_file", default=None,
-        help=("The cell genotyping file in VCF or H5 format."))
+        help=("The cell genotype file in VCF format"))
     parser.add_option("--nDonor", "-N", type="int", dest="n_donor", 
-        default=None, help="Number of donors to infer [default: %default]")
+        default=None, help=("Number of donors to demultiplex; can be larger "
+        "than provided in donor_file"))
     parser.add_option("--outDir", "-o", dest="out_dir", default=None,
         help=("Dirtectory for output files [default: $cellFilePath/vireo]"))
 
     group1 = OptionGroup(parser, "Optional arguments")
     group1.add_option("--donorFile", "-d", dest="donor_file", default=None,
-        help=("The donor genotyping file in VCF or H5 format [default: NA]"))
-    group1.add_option("--GTtag", "-t", dest="GT_tag", default='PL',
+        help=("The donor genotype file in VCF format. Please filter the sample "
+        "and region with bcftools -s and -R first!"))
+    group1.add_option("--genoTag", "-t", dest="geno_tag", default='PL',
         help=("The tag for donor genotype: GT, GP, PL [default: %default]"))
     group1.add_option("--noDoublet", dest="no_doublet", action="store_true", 
         default=False, help="If use, not checking doublets.")
     group1.add_option("--nproc", "-p", type="int", dest="nproc", default=1,
         help="Number of subprocesses [default: %default]")
+    group1.add_option("--nInit", "-M", type="int", dest="n_init", default=None,
+        help="Number of random initializations [default: %default]")
     group1.add_option("--randSeed", type="int", dest="rand_seed", default=None,
         help="Seed for random initialization [default: %default]")
     
@@ -66,10 +71,7 @@ def main():
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)
 
-    ## input data
-    n_donor = options.n_donor
-    donor_names = ['donor%d' %x for x in range(n_donor)]
-        
+    ## input data    
     if options.cell_file is None:
         print("Error: need cell file in vcf or hdf5 format.")
         sys.exit(1)
@@ -80,21 +82,55 @@ def main():
         n_vars = np.array(np.sum(cell_dat['DP'] > 0, axis=0)).reshape(-1)
         print("[vireo] Loading cell VCF file, done.")
 
+    ## input donor genotype
+    n_donor = options.n_donor
+    if options.donor_file is not None:
+        print("[vireo] Loading donor VCF file ...")
+        donor_vcf = load_VCF(options.donor_file, sparse=False)
+        donor_GPb = parse_donor_GPb(donor_vcf['GenoINFO'][options.geno_tag], 
+            options.geno_tag)
+        
+        mm_idx = match(cell_vcf['variants'], donor_vcf['variants'])
+        idx1 = np.where(mm_idx != None)[0]
+        idx2 = mm_idx[idx1].astype(int)
+
+        cell_dat['AD'] = cell_dat['AD'][idx1, :]
+        cell_dat['DP'] = cell_dat['DP'][idx1, :]
+        donor_GPb = donor_GPb[idx2, :, :]
+        print("[vireo] Loading donor VCF file, done.")
+
+        if n_donor is None:
+            n_donor = donor_GPb.shape[2]
+            donor_names = donor_vcf['samples']
+        else:
+            #TODO: check GT incomplete
+            pass
+        learn_GT = False
+    else:
+        learn_GT = True
+        donor_GPb = None
+        donor_names = ['donor%d' %x for x in range(n_donor)]
+
     ## run vireo model (try multiple initializations)
-    res_vireo = vireo_core(cell_dat['AD'], cell_dat['DP'], n_donor=n_donor, 
-        random_seed=options.rand_seed)
+    # res_vireo = vireo_core(cell_dat['AD'], cell_dat['DP'], n_donor=n_donor, 
+    #     GT_prior=donor_GPb, learn_GT=learn_GT, random_seed=options.rand_seed)
+    res_vireo = vireo_flock(cell_dat['AD'], cell_dat['DP'], n_donor=n_donor, 
+        GT_prior=donor_GPb, learn_GT=learn_GT, random_seed=options.rand_seed)
     print("[vireo] VB lower bound: %.2f" %res_vireo['LB_list'][-1])  
-    
+    print(res_vireo['theta_shapes'])
+
     ## save donor id for each cell
     write_donor_id(out_dir, donor_names, cell_vcf['samples'], n_vars,
         res_vireo['ID_prob'], res_vireo['doublet_prob'])
 
     # ## save inferred donor genotype
-    # donor_vcf_out = cell_vcf
-    # donor_vcf_out['samples'] = donor_names
-    # donor_vcf_out['GenoINFO'] = GenoINFO_maker(res_vireo['GT_prob'], 
-    #     res_vireo['AD_donor'], res_vireo['DP_donor'])
-    # write_VCF(out_dir + "/GT_donors.vireo.vcf.gz", donor_vcf_out)
+    if options.donor_file is None:
+        donor_vcf_out = cell_vcf
+        donor_vcf_out['samples'] = donor_names
+        donor_vcf_out['GenoINFO'] = GenoINFO_maker(res_vireo['GT_prob'], 
+            cell_dat['AD'] * res_vireo['ID_prob'], 
+            cell_dat['DP'] * res_vireo['ID_prob'])
+        write_VCF(out_dir + "/GT_donors.vireo.vcf.gz", donor_vcf_out)
     
     run_time = time.time() - START_TIME
     print("[vireo] All done: %d min %.1f sec" %(int(run_time / 60), 
