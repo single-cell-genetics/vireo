@@ -38,19 +38,23 @@ def main():
         help=("Dirtectory for output files [default: $cellFilePath/vireo]"))
 
     group1 = OptionGroup(parser, "Optional arguments")
+    group1.add_option("--noDoublet", dest="no_doublet", action="store_true", 
+        default=False, help="If use, not checking doublets.")
     group1.add_option("--donorFile", "-d", dest="donor_file", default=None,
         help=("The donor genotype file in VCF format. Please filter the sample "
         "and region with bcftools -s and -R first!"))
     group1.add_option("--genoTag", "-t", dest="geno_tag", default='PL',
         help=("The tag for donor genotype: GT, GP, PL [default: %default]"))
-    group1.add_option("--noDoublet", dest="no_doublet", action="store_true", 
-        default=False, help="If use, not checking doublets.")
-    group1.add_option("--nproc", "-p", type="int", dest="nproc", default=1,
-        help="Number of subprocesses [default: %default]")
     group1.add_option("--nInit", "-M", type="int", dest="n_init", default=None,
-        help="Number of random initializations [default: %default]")
+        help="Number of random initializations [default: 2 (GT) or 50 (no GT)]")
+    group1.add_option("--amplifyK", type=float, dest="K_amplify", default=None,
+        help="Pre-cluster with amplified K [default: 1.0 (GT) or 1.2 (no GT)]")
+    group1.add_option("--forceLearnGT", dest="force_learnGT", default=False, 
+        action="store_true", help="If use, treat donor GT as prior only.")
     group1.add_option("--randSeed", type="int", dest="rand_seed", default=None,
         help="Seed for random initialization [default: %default]")
+    # group1.add_option("--nproc", "-p", type="int", dest="nproc", default=1,
+    #     help="Number of subprocesses [default: %default]")
     
     parser.add_option_group(group1)
     (options, args) = parser.parse_args()
@@ -87,6 +91,11 @@ def main():
     if options.donor_file is not None:
         print("[vireo] Loading donor VCF file ...")
         donor_vcf = load_VCF(options.donor_file, sparse=False)
+        if (options.geno_tag not in donor_vcf['GenoINFO']):
+            print("[vireo] No " + options.geno_tag + " tag in donor genotype; " 
+                "please try another tag for genotype, e.g., GT")
+            print("        %s" %options.donor_file)
+            sys.exit(1)
         donor_GPb = parse_donor_GPb(donor_vcf['GenoINFO'][options.geno_tag], 
             options.geno_tag)
         
@@ -99,25 +108,34 @@ def main():
         donor_GPb = donor_GPb[idx2, :, :]
         print("[vireo] Loading donor VCF file, done.")
 
-        if n_donor is None:
+        if n_donor is None or n_donor <= donor_GPb.shape[2]:
             n_donor = donor_GPb.shape[2]
             donor_names = donor_vcf['samples']
+            learn_GT = False
         else:
-            #TODO: check GT incomplete
-            pass
-        learn_GT = False
+            learn_GT = True
+            donor_names = (donor_vcf['samples'] + 
+                ['donor%d' %x for x in range(donor_GPb.shape[2], n_donor)])
     else:
         learn_GT = True
         donor_GPb = None
         donor_names = ['donor%d' %x for x in range(n_donor)]
 
+    if options.n_init is None:
+        n_init = 50 if learn_GT else 2
+    else:
+        n_init = options.n_init
+    if options.K_amplify is None:
+        K_amplify = 1.2 if learn_GT else 1.0
+    else:
+        K_amplify = options.K_amplify
+    if options.force_learnGT:
+        learn_GT = True
+
     ## run vireo model (try multiple initializations)
-    # res_vireo = vireo_core(cell_dat['AD'], cell_dat['DP'], n_donor=n_donor, 
-    #     GT_prior=donor_GPb, learn_GT=learn_GT, random_seed=options.rand_seed)
     res_vireo = vireo_flock(cell_dat['AD'], cell_dat['DP'], n_donor=n_donor, 
-        GT_prior=donor_GPb, learn_GT=learn_GT, random_seed=options.rand_seed)
-    print("[vireo] VB lower bound: %.2f" %res_vireo['LB_list'][-1])  
-    print(res_vireo['theta_shapes'])
+        GT_prior=donor_GPb, learn_GT=learn_GT, n_init=n_init, 
+        K_amplify=K_amplify, random_seed=options.rand_seed)
 
     ## save donor id for each cell
     write_donor_id(out_dir, donor_names, cell_vcf['samples'], n_vars,

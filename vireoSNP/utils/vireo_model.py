@@ -15,7 +15,7 @@ from .vireo_base import VB_lower_bound, tensor_normalize, loglik_amplify
 def show_progress(RV=None):
     return RV
 
-def vireo_flock(AD, DP, n_donor=None, K_amplify=1, n_init=20, n_proc=1, 
+def vireo_flock(AD, DP, n_donor=None, K_amplify=1.2, n_init=20, 
     random_seed=None, check_doublet=True, **kwargs):
     """
     """
@@ -31,9 +31,14 @@ def vireo_flock(AD, DP, n_donor=None, K_amplify=1, n_init=20, n_proc=1,
         _ID_prob = np.random.rand(AD.shape[1], n_donor_run1)
         ID_prob_list.append(tensor_normalize(_ID_prob, axis=1))
 
-    ## multiple initializations
+    ## first run: multiple short initializations
     result = []
-
+    for _ID_prob in ID_prob_list:
+        result.append(vireo_core(AD, DP, n_donor=n_donor_run1,
+            ID_prob_init=_ID_prob, min_iter=5, max_iter=10, 
+            verbose=False, check_doublet=False, **kwargs))
+        
+    ### TODO: test parallel computing
     # pool = multiprocessing.Pool(processes=n_proc)
     # for _ID_prob in ID_prob_list:
     #     result.append(pool.apply_async(vireo_core, (AD, DP, 
@@ -43,11 +48,6 @@ def vireo_flock(AD, DP, n_donor=None, K_amplify=1, n_init=20, n_proc=1,
     # pool.join()
     # result = [res.get() res for res in result]
     # print("")
-
-    for _ID_prob in ID_prob_list:
-        result.append(vireo_core(AD, DP, n_donor=n_donor_run1,
-            ID_prob_init=_ID_prob, min_iter=5, max_iter=10, 
-            verbose=False, check_doublet=False, **kwargs))
     
     LB_list = [x['LB_list'][-1] for x in result]
     print("[vireo] RUN1 lower bound ranges: [%.1f, %.1f, %.1f]" 
@@ -58,18 +58,22 @@ def vireo_flock(AD, DP, n_donor=None, K_amplify=1, n_init=20, n_proc=1,
     _donor_idx = np.argsort(_donor_cnt)[::-1]
     print("\t".join(["donor%d" %x for x in _donor_idx]))
     print("\t".join(["%.0f" %_donor_cnt[x] for x in _donor_idx]))
-    
-    print(res1['theta_shapes'])
 
-    ## second run
+    ## second run: continue the best initialization in the first run
     print(("[vireo] RUN2: continue RUN1's best initial"))
     _ID_prob = res1['ID_prob'][:, _donor_idx[:n_donor]]
     _ID_prob[_ID_prob < 10**-10] = 10**-10
     res1 = vireo_core(AD, DP, n_donor=n_donor, ID_prob_init=_ID_prob, 
-                      **kwargs) #theta_init=res1['theta_shapes'], 
-    _donor_cnt = np.sum(res1['ID_prob'], axis=0)
-    _donor_idx = np.argsort(_donor_cnt)[::-1]
-    # print("[vireo] RUN2 Lower bound:", res1['LB_list'][-1])
+                      **kwargs)
+    
+    print("[vireo] RUN2: %d iterations; lower bound %.1f" 
+          %(len(res1['LB_list']), res1['LB_list'][-1]))
+    print("[vireo] beta parameters for binomial rate:")
+    np.set_printoptions(formatter={'float': lambda x: format(x, '.1f')})
+    print(res1['theta_shapes'])
+    
+    # _donor_cnt = np.sum(res1['ID_prob'], axis=0)
+    # _donor_idx = np.argsort(_donor_cnt)[::-1]
     # print("\t".join(["donor%d" %x for x in _donor_idx]))
     # print("\t".join(["%.0f" %_donor_cnt[x] for x in _donor_idx]))
     
@@ -78,8 +82,7 @@ def vireo_flock(AD, DP, n_donor=None, K_amplify=1, n_init=20, n_proc=1,
 
 def vireo_core(AD, DP, n_donor=None, GT_prior=None, learn_GT=True,
     theta_prior=None, learn_theta=True, Psi=None, ID_prob_init=None, 
-    theta_init=None,
-    doublet_prior=None, check_doublet=True, min_iter=20, max_iter=200, 
+    doublet_prior=None, check_doublet=True, min_iter=20, max_iter=100, 
     epsilon_conv=1e-2, random_seed=None, verbose=False):
     """
     """
@@ -93,16 +96,13 @@ def vireo_core(AD, DP, n_donor=None, GT_prior=None, learn_GT=True,
         else:
             n_donor = GT_prior.shape[2]
         
-    n_var = AD.shape[0] # n_variants and n_cells
+    n_var = AD.shape[0] # n_variants
     
     ## initialize thete
     if theta_prior is None:
         #theta_prior = np.array([[0.3, 29.7], [3, 3], [29.7, 0.3]])
         theta_prior = np.array([[0.1, 99.9], [50, 50], [99.9, 0.1]])
-    if theta_init is None:
-        theta_shapes = theta_prior.copy()
-    else:
-        theta_shapes = theta_init.copy()
+    theta_shapes = theta_prior.copy()
 
     ## initialize Psi
     if Psi is None:
@@ -144,7 +144,7 @@ def vireo_core(AD, DP, n_donor=None, GT_prior=None, learn_GT=True,
     for it in range(max_iter):
         ID_prob, GT_prob, theta_shapes, LB[it] = update_VB(AD, DP, GT_prob, 
             theta_shapes, theta_prior, GT_prior, Psi, doublet_prior,
-            learn_GT=learn_GT, learn_theta=learn_theta, check_doublet=False)
+            learn_GT=learn_GT, learn_theta=learn_theta, check_doublet=check_doublet)
 
         if it > min_iter:
             if LB[it] < LB[it - 1]:
@@ -156,7 +156,7 @@ def vireo_core(AD, DP, n_donor=None, GT_prior=None, learn_GT=True,
             elif LB[it] - LB[it - 1] < epsilon_conv:
                 break
 
-    ## check doublet
+    ## one-off check doublet
     if check_doublet:
         ID_prob2, GT_prob, theta_shapes, LB_doublet = update_VB(AD, DP, GT_prob, 
             theta_shapes, theta_prior, GT_prior, Psi, doublet_prior,
@@ -191,10 +191,12 @@ def update_VB(AD, DP, GT_prob, theta_shapes, theta_prior, GT_prior,
     if check_doublet:
         GT_both = add_doublet_GT(GT_prob)
         theta_both = add_doublet_theta(theta_shapes)
+        n_doublet_pair = GT_both.shape[2] - GT_prob.shape[2]
         if doublet_prior is None:
-            doublet_prior = 1 - GT_prob.shape[2] / GT_both.shape[2]
-        Psi_both = np.ones(GT_both.shape[2]) * doublet_prior
-        Psi_both[:GT_prob.shape[2]] = Psi * (1 - doublet_prior)
+            doublet_prior = min(0.5, AD.shape[1] / 100000)
+            
+        Psi_both = np.append(Psi * (1 - doublet_prior), 
+                             np.ones(n_doublet_pair) / n_doublet_pair * doublet_prior)
     else:
         Psi_both = Psi.copy()
         GT_both = GT_prob.copy()
@@ -208,7 +210,7 @@ def update_VB(AD, DP, GT_prob, theta_shapes, theta_prior, GT_prior,
                                          theta_shapes, GT_prior)
     if learn_theta:
         theta_shapes = get_theta_shapes(AD, DP, ID_prob, 
-                                        GT_prob, theta_shapes)
+                                        GT_prob, theta_prior)
     
     ### check how to calculate lower bound for when detecting doublets
     LB_val = VB_lower_bound(logLik_ID, GT_prob, ID_prob2, theta_shapes, 

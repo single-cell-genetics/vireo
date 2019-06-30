@@ -233,7 +233,8 @@ def parse_donor_GPb(GT_dat, tag='GT'):
         elif tag == 'GP':
             _prob = np.array(code.split(','), float)
         elif tag == 'PL':
-            _prob = 10**(-0.1 * np.array(code.split(','), float) - 0.025) # 0?
+            _Phred = np.array(code.split(','), float)
+            _prob = 10**(-0.1 * (_Phred - min(_Phred)) - 0.025) # 0?
         else:
             _prob = None
         return _prob / np.sum(_prob)
