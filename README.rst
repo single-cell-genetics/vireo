@@ -50,19 +50,19 @@ command line `vireo` for donor deconvolution in any of these four situations:
 
    ::
 
-      vireo -c $CELL_FILE -d $DONOR_GT_FILE
+      vireo -c $CELL_FILE -d $DONOR_GT_FILE -o $OUT_DIR
 
 3) with genotype for part of the samples
 
    ::
 
-      vireo -c $CELL_FILE -d $DONOR_GT_FILE -N $n_donor 
+      vireo -c $CELL_FILE -d $DONOR_GT_FILE -o $OUT_DIR -N $n_donor 
 
 4) with genotype but not confident
 
    ::
 
-      vireo -c $CELL_FILE -d $DONOR_GT_FILE --forceLearnGT
+      vireo -c $CELL_FILE -d $DONOR_GT_FILE -o $OUT_DIR --forceLearnGT
 
 For details, see the full manual_ or type "vireo -h" for all arguments. We also 
 provide a demo.sh_ for running the test data sets in this repo.
