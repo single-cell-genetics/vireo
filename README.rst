@@ -37,6 +37,27 @@ For more options of installation, see the full installation_.
 Usage and manual
 ================
 
+Genotyping for each cell (pre-step)
+-----------------------------------
+There might be some bioinformatics efforts in this step, however, a few existing 
+software can provide a solution. There are often two steps for this:
+
+1) identify candidate SNPs: `known common SNPs`_ / freebayes_ / cellSNP_
+2) genotype candidate SNPs in each cell: cellSNP_ / vartrix_ / `bcftools mpileup`_
+
+See more introduction in the genotyping_ section.
+
+.. _known common SNPs: https://github.com/huangyh09/cellSNP#list-of-candidate-snps
+.. _freebayes: https://github.com/ekg/freebayes
+.. _cellSNP: https://github.com/huangyh09/cellSNP
+.. _vartrix: https://github.com/10XGenomics/vartrix
+.. _bcftools mpileup: http://www.htslib.org/doc/bcftools.html
+.. _genotyping: https://vireoSNP.readthedocs.io/en/latest/genotype.html
+
+
+Demultiplexing from allelic expression
+--------------------------------------
+
 This python package offers a set of utilities functions and an executable 
 command line `vireo` for donor deconvolution in any of these four situations:
 
@@ -46,7 +67,7 @@ command line `vireo` for donor deconvolution in any of these four situations:
 
       vireo -c $CELL_FILE -N $n_donor -o $OUT_DIR
 
-2) with genotype for all samples (GT, GP, or PL)
+2) with genotype for all samples (tag via -t: GT, GP, or PL)
 
    ::
 
