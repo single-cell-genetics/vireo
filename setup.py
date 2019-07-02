@@ -64,7 +64,7 @@ setup(
 
     extras_require={
         'docs': [
-            'sphinx >= 1.4',
+            'sphinx == 1.4',
             'sphinx_bootstrap_theme']},
 
     py_modules = ['vireoSNP']
