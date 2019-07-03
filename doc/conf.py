@@ -134,7 +134,7 @@ html_theme_options = {
     'navbar_links': [
         ("Install", "install"),
         ("Manual", "manual"),
-        ("Preprocess", "genotype"),
+        ("Genotyping", "genotype"),
         ("Simulation", "simulate"),
         ("Release", "release")
         # ("API", "manual"),
