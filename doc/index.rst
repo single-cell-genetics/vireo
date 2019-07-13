@@ -56,7 +56,7 @@ Quick Resources
 **Latest version on GitHub**
 https://github.com/huangyh09/vireo
 
-**Simulation wraps**
+**Scripts for simulation**
 https://github.com/huangyh09/vireo/tree/master/simulate
 
 **All releases**

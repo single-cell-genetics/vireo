@@ -3,13 +3,14 @@
 ## Input files
 CELL_FILE=data/cells.cellSNP.vcf.gz
 DONOR_FILE=data/donors.cellSNP.vcf.gz
+mkdir data/outs/
 
 ## MODE 1: no genotype
-OUT_DIR=data/cellSNP_noGT
+OUT_DIR=data/outs/cellSNP_noGT
 # vireo -c $CELL_FILE -N 4 -o $OUT_DIR --randSeed 2 #--amplifyK 1.5
 
 ## MODE 2: given genotype
-OUT_DIR=data/cellSNP_PL
+OUT_DIR=data/outs/cellSNP_PL
 vireo -c $CELL_FILE -d $DONOR_FILE -o $OUT_DIR --randSeed 2 #--forceLearnGT #--genoTag PL
 
 

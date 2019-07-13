@@ -148,10 +148,10 @@ def main():
     # parse command line options
     parser = OptionParser()
     parser.add_option("--samFiles", "-s", dest="sam_files", default=None,
-        help=("Input sam files, comma separated."))
+        help=("Input bam or sam files, comma separated."))
     parser.add_option("--barcodeFiles", "-b", dest="barcodes_files", 
         default=None, help=("Input barcode files, comma separated."))
-    parser.add_option("--regionFiles", "-r", dest="region_file", 
+    parser.add_option("--regionFile", "-r", dest="region_file", 
         default=None, help=("Input SNP list."))
     parser.add_option("--doubletRate", "-d", dest="doublet_rate", 
         type="float", default=None, help=("Doublet rate [default: n/100000]"))

@@ -2,49 +2,58 @@
 Installation
 ============
 
-Easy install
-============
+**Required packages in python:** ``numpy>=1.9.0``, ``scipy>=1.0``, ``h5py``
 
-* Required packages in python: `numpy`, `scipy`, `h5py`
+**Environment:** we only tested Vireo in ``Python 3`` environment, so if it 
+fails in Python 2, please try it in Python 3 before reporting the issue. 
 
-  * we suggest using Anaconda_ distribute, which includes most packages, and 
-    provides you a user specific environment, i.e., all your 
-    python packages go to a single folder. Thus, you don't need the root to 
-    install packages.
+We recommend using Anaconda_ distribute to set up the environment. It not only
+includes all dependent packages, but also provides a user controlled 
+environment, namely, you will have the root permission for this distribution, 
+including installation of any package.
 
-  .. _Anaconda: http://continuum.io/downloads
+.. _Anaconda: http://continuum.io/downloads
 
-* You can install `Vireo` simply via pypi in terminal (suggested), or upgrade 
-  by add ``--upgrade`` as follows:
+Easy install from PyPI
+======================
 
-  ::
+You can install `Vireo` simply via PyPI_ in terminal (**suggested**), or upgrade 
+by adding ``--upgrade`` as follows:
 
-    pip install vireoSNP
+::
+  
+  pip install vireoSNP
 
-    pip install --upgrade --no-deps vireoSNP
+  pip install --upgrade --no-deps vireoSNP
+
+.. _PyPI: https://pypi.org/project/vireoSNP
 
 
-Source code
+Install from source code
+========================
+
+Alternatively, you can download the source code from GitHub_ (for the 
+latest version) and run python setup in terminal:
+
+.. _GitHub: https://github.com/huangyh09/vireo
+
+::
+  
+  wget https://github.com/huangyh09/vireo/archive/master.zip
+  unzip master.zip
+  cd vireo-master
+
+  python setup.py install
+
+In any case, if had the permission error for installation as you are not root, 
+add ``--user``.
+
+
+Quick check
 ===========
 
-* Alternatively, you also could download the source code via GitHub with the 
-  latest version) and run python setup in terminal:
-
-* GitHub: https://github.com/huangyh09/vireo
-
-  ::
-
-    python setup.py install
-
-* In any case, if had the permission error for installation as you are not 
-  root, add ``--user``.
-
-
-Test
-====
-
-In order to test the installation, you could type ``vireo``. If successful, you
-will see the following output.
+In order to test the installation, you could type ``vireo`` in terminal. If 
+successfully installed, you will see the following output.
 
 .. code-block:: html
 
@@ -52,16 +61,19 @@ will see the following output.
 
   use -h or --help for help on argument.
 
-If installation is sucessful, but can't run it, then check whether the directory 
-which contains the executable binary file is added to PATH environment. 
+If installation is sucessful, but can't run it (e.g., message below), then 
+check whether the directory which contains the executable binary file is added 
+to PATH environment. 
 
 .. code-block:: html
 
   vireo: command not found
 
-Usually the directory is ``~/.local/bin`` if you don't use Anaconda. You could 
-add the path into PATH environment variable, by write the following line into 
-``.profile`` or ``.bashrc`` file.
+If using Anaconda, the executable ``vireo`` is located in 
+``$anaconda3/bin/vireo``. 
+If not using Anaconda, it is usually located in directory ``~/.local/bin``. You 
+could add the path into PATH environment variable, by write the following line 
+into ``.profile`` or ``.bashrc`` file.
 
 :: 
   
