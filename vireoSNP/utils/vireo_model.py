@@ -15,8 +15,8 @@ from .vireo_base import VB_lower_bound, tensor_normalize, loglik_amplify
 def show_progress(RV=None):
     return RV
 
-def vireo_flock(AD, DP, n_donor=None, K_amplify=1.2, n_init=20, 
-    random_seed=None, check_doublet=True, **kwargs):
+def vireo_flock(AD, DP, GT_prior=None, n_donor=None, K_amplify=1.2, 
+                n_init=20, random_seed=None, check_doublet=True, **kwargs):
     """
     """
     if random_seed is not None:
@@ -32,9 +32,14 @@ def vireo_flock(AD, DP, n_donor=None, K_amplify=1.2, n_init=20,
         ID_prob_list.append(tensor_normalize(_ID_prob, axis=1))
 
     ## first run: multiple short initializations
+    if GT_prior is not None and n_donor > GT_prior.shape[2]:
+        GT_prior_use = None
+    else:
+        GT_prior_use = GT_prior
     result = []
     for _ID_prob in ID_prob_list:
         result.append(vireo_core(AD, DP, n_donor=n_donor_run1,
+            GT_prior = GT_prior_use,
             ID_prob_init=_ID_prob, min_iter=5, max_iter=10, 
             verbose=False, check_doublet=False, **kwargs))
         
@@ -61,10 +66,19 @@ def vireo_flock(AD, DP, n_donor=None, K_amplify=1.2, n_init=20,
 
     ## second run: continue the best initialization in the first run
     print(("[vireo] RUN2: continue RUN1's best initial"))
+    
     _ID_prob = res1['ID_prob'][:, _donor_idx[:n_donor]]
     _ID_prob[_ID_prob < 10**-10] = 10**-10
-    res1 = vireo_core(AD, DP, n_donor=n_donor, ID_prob_init=_ID_prob, 
-                      **kwargs)
+    
+    if GT_prior is not None and n_donor > GT_prior.shape[2]:
+        GT_prior_use = res1['GT_prob'][:, :, _donor_idx[:n_donor]]
+        idx = greed_match(GT_prior, GT_prior_use)
+        GT_prior_use[:, :, idx] = GT_prior
+        print(idx)
+        print(GT_prior_use.shape)
+        
+    res1 = vireo_core(AD, DP, GT_prior=GT_prior_use, n_donor=n_donor, 
+                      ID_prob_init=_ID_prob, **kwargs)
     
     print("[vireo] RUN2: %d iterations; lower bound %.1f" 
           %(len(res1['LB_list']), res1['LB_list'][-1]))
@@ -244,7 +258,8 @@ def add_doublet_GT(GT_prob):
     Add doublet genotype by summarizing their probability:
     New GT has five categories: 0, 1, 2, 1.5, 2.5
     """
-    db_idx = np.array(list(permutations(range(GT_prob.shape[2]), 2)))
+    perm_iter = permutations(range(GT_prob.shape[2]), 2)
+    db_idx = np.array([x for x in perm_iter if x[0] < x[1]])
     idx1 = db_idx[:, 0]
     idx2 = db_idx[:, 1]
     
@@ -266,3 +281,26 @@ def add_doublet_GT(GT_prob):
                                             GT_prob.shape[2])), axis=1)
     return np.append(GT_prob1, GT_prob2, axis=2)
     
+
+def greed_match(X, Z, axis=2):
+    """
+    Match Z to X by minimize the difference, 
+    hence Z[:, :, axis] is best aligned to X
+    """
+    diff_mat = np.zeros((X.shape[axis], Z.shape[axis]))
+    for i in range(X.shape[axis]):
+        for j in range(Z.shape[axis]):
+            diff_mat[i, j] = np.mean(np.abs(X[:, :, i] - Z[:, :, j]))
+            
+    diff_copy = diff_mat.copy()
+    idx_out = -1 * np.ones(X.shape[axis], int)
+    while (-1 in idx_out):
+        idx_i = np.argmin(diff_copy) // diff_copy.shape[1]
+        idx_j = np.argmin(diff_copy) % diff_copy.shape[1]
+        idx_out[idx_i] = idx_j
+        # print(idx_i, idx_j, idx_out)
+
+        diff_copy[idx_i, :] = np.max(diff_mat) + 1
+        diff_copy[:, idx_j] = np.max(diff_mat) + 1
+        
+    return idx_out

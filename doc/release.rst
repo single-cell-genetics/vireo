@@ -2,6 +2,13 @@
 History
 =======
 
+Release v0.1.2 (15/07/2019)
+===========================
+* Support sparse matrices as input (for cellSNP directory with `-O`)
+* Plot the distance between genotype probability between estimated samples
+* Upgrade the manual, including the usage of simulation (readme in the 
+  simulation folder of GitHub repo)
+
 Release v0.1.1 (30/06/2019)
 ===========================
 * A completed version for all planned features

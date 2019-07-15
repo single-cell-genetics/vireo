@@ -2,7 +2,7 @@
 Installation
 ============
 
-**Required packages in python:** ``numpy>=1.9.0``, ``scipy>=1.0``, ``h5py``
+**Required packages in python:** ``numpy>=1.9.0``, ``scipy>=1.0``, ``matplotlib``
 
 **Environment:** we only tested Vireo in ``Python 3`` environment, so if it 
 fails in Python 2, please try it in Python 3 before reporting the issue. 

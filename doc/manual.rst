@@ -3,14 +3,14 @@ Manual
 ======
 
 Demultiplexing requires two count matrices (variant-by-cell) of reads or UMIs 
-for each variant in each cell: ``A`` for alternative allele and ``D`` depth 
+for each variant in each cell: ``AD`` for alternative allele and ``DP`` depth 
 (i.e., summary of alternative and reference alleles). These two matrices can be 
 obtained by genotyping a list of variants in each cell. We provide a guideline 
 for cellular genotyping_ with a recommendation of cellSNP_ that is developed by 
 us, too.
 
 Once the genotypes for each cell have been obtained, e.g., in VCF format, or two
-sparse matrices ``A`` and ``D``, we can apply Vireo for demultiplexing.
+sparse matrices ``AD`` and ``DP``, we can apply Vireo for demultiplexing.
 
 
 Demultiplexing single cells
@@ -30,25 +30,30 @@ to demultiplex scRNA-seq data.
 
    ::
 
-      vireo -c $CELL_FILE -N $n_donor -o $OUT_DIR
+      vireo -c $CELL_DATA -N $n_donor -o $OUT_DIR
 
 2) with genotype for all samples (GT, GP, or PL)
 
    ::
 
-      vireo -c $CELL_FILE -d $DONOR_GT_FILE -o $OUT_DIR
+      vireo -c $CELL_DATA -d $DONOR_GT_FILE -o $OUT_DIR
 
 3) with genotype for part of the samples
 
    ::
 
-      vireo -c $CELL_FILE -d $DONOR_GT_FILE -o $OUT_DIR -N $n_donor 
+      vireo -c $CELL_DATA -d $DONOR_GT_FILE -o $OUT_DIR -N $n_donor 
 
 4) with genotype but not confident (or only for subset of SNPs)
 
    ::
 
-      vireo -c $CELL_FILE -d $DONOR_GT_FILE -o $OUT_DIR --forceLearnGT
+      vireo -c $CELL_DATA -d $DONOR_GT_FILE -o $OUT_DIR --forceLearnGT
+
+Viroe supports the cell data in two formats:
+* standard VCF file with variants by cells
+* a cellSNP output folder containing VCF for variants info and sparse matrices 
+  ``AD`` and ``DP``
 
 
 All arguments
@@ -62,8 +67,9 @@ Type ``vireo -h`` for details of all arguments:
 
    Options:
       -h, --help            show this help message and exit
-      -c CELL_FILE, --cellFile=CELL_FILE
-                              The cell genotype file in VCF format
+      -c CELL_DATA, --cellData=CELL_DATA
+                              The cell genotype file in VCF format or cellSNP folder
+                              with sparse matrices.
       -N N_DONOR, --nDonor=N_DONOR
                               Number of donors to demultiplex; can be larger than
                               provided in donor_file
@@ -85,6 +91,7 @@ Type ``vireo -h`` for details of all arguments:
                               Pre-cluster with amplified K [default: 1.0 (GT) or 1.2
                               (no GT)]
       --forceLearnGT      If use, treat donor GT as prior only.
+      --noPlot            If use, turn off plotting GT distance.
       --randSeed=RAND_SEED
                               Seed for random initialization [default: none]
 

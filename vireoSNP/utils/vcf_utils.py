@@ -5,7 +5,6 @@
 import os
 import sys
 import gzip
-import h5py
 import subprocess
 import numpy as np
 
@@ -87,7 +86,8 @@ def load_VCF(vcf_file, biallelic_only=False, load_sample=True, sparse=True):
             if line.startswith("##contig="):
                 contig_lines.append(line.rstrip())
             if line.startswith("#CHROM"):
-                obs_ids = line.rstrip().split("\t")[9:]
+                if load_sample:
+                    obs_ids = line.rstrip().split("\t")[9:]
                 key_ids = line[1:].rstrip().split("\t")[:8]
                 for _key in key_ids:
                     FixedINFO[_key] = []
@@ -108,10 +108,11 @@ def load_VCF(vcf_file, biallelic_only=False, load_sample=True, sparse=True):
     RV = {}
     RV["variants"]  = var_ids
     RV["FixedINFO"] = FixedINFO
-    RV["samples"]   = obs_ids
-    RV["GenoINFO"]  = parse_sample_info(obs_dat, sparse=sparse)
     RV["contigs"]   = contig_lines
     RV["comments"]  = comment_lines
+    if load_sample:
+        RV["samples"]   = obs_ids
+        RV["GenoINFO"]  = parse_sample_info(obs_dat, sparse=sparse)
     return RV
 
 
@@ -119,6 +120,7 @@ def write_VCF_to_hdf5(VCF_dat, out_file):
     """
     Write vcf data into hdf5 file
     """
+    import h5py
     f = h5py.File(out_file, 'w')
     f.create_dataset("contigs", data=np.string_(VCF_dat['contigs']), 
                      compression="gzip", compression_opts=9)
@@ -219,16 +221,16 @@ def write_VCF(out_file, VCF_dat, GenoTags=['GT', 'AD', 'DP', 'PL']):
     pro.communicate()[0]
 
     
-def parse_donor_GPb(GT_dat, tag='GT'):
+def parse_donor_GPb(GT_dat, tag='GT', min_prob=0.0):
     """
     Parse the donor genotype probability
     tag: GT, GP, or PL
     """
-    def parse_GT_code(code, tag):
-        if code == ".":
+    def parse_GT_code(code, tag, min_prob=0):
+        if code == "." or code == "./." or code == ".|.":
             return np.array([1/3, 1/3, 1/3])
         if tag == 'GT':
-            _prob = np.array([0, 0, 0])
+            _prob = np.array([0, 0, 0], float)
             _prob[int(float(code[0]) + float(code[-1]))] = 1
         elif tag == 'GP':
             _prob = np.array(code.split(','), float)
@@ -237,6 +239,8 @@ def parse_donor_GPb(GT_dat, tag='GT'):
             _prob = 10**(-0.1 * (_Phred - min(_Phred)) - 0.025) # 0?
         else:
             _prob = None
+            
+        _prob += min_prob
         return _prob / np.sum(_prob)
 
     if ['GT', 'GP', 'PL'].count(tag) == 0:
@@ -246,6 +250,6 @@ def parse_donor_GPb(GT_dat, tag='GT'):
     GT_prob = np.zeros((len(GT_dat), 3, len(GT_dat[0])))
     for i in range(GT_prob.shape[0]):
         for j in range(GT_prob.shape[2]):
-            GT_prob[i, :, j] = parse_GT_code(GT_dat[i][j], tag)
-
+            GT_prob[i, :, j] = parse_GT_code(GT_dat[i][j], tag,
+                                             min_prob)
     return GT_prob
