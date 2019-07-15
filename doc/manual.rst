@@ -51,6 +51,7 @@ to demultiplex scRNA-seq data.
       vireo -c $CELL_DATA -d $DONOR_GT_FILE -o $OUT_DIR --forceLearnGT
 
 Viroe supports the cell data in two formats:
+
 * standard VCF file with variants by cells
 * a cellSNP output folder containing VCF for variants info and sparse matrices 
   ``AD`` and ``DP``

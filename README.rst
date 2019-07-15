@@ -96,9 +96,10 @@ command line `vireo` for donor deconvolution in any of these four situations
       vireo -c $CELL_DATA -d $DONOR_GT_FILE -o $OUT_DIR --forceLearnGT
 
 The cell data can be any of the following two formats:
+
 * standard VCF file with variants by cells
 * a cellSNP output folder containing VCF for variants info and sparse matrices 
-  ``AD`` and ``DP``
+  `AD` and `DP`
 
 For details, see the full manual_ or type "vireo -h" for all arguments. We also 
 provide a demo.sh_ for running the test data sets in this repo.
