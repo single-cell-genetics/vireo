@@ -25,22 +25,20 @@ while the Python package name is vireoSNP_ to aviod name confilict on PyPI.
 Installation
 ============
 
-The easiest way is to install via PyPI_ by typing this line is terminal:
+Vireo is available through PyPI_. To install, type the following command 
+line, and add ``-U`` for upgrading:
 
-  ::
+.. code-block:: bash
 
-    pip install vireoSNP
+  pip install vireoSNP
 
-Alternatively, you can always download this repository and install manually:
+Alternatively, you can download or clone this repository and type 
+``python setup.py install`` to install. In either case, add ``--user`` if you 
+don't have the permission as a root or for your Python environment.
 
-  ::
-
-    python setup.py install
-
-For more options of installation, see the full installation_.
+For more instructions, see the installation_ manual.
 
 .. _PyPI: https://pypi.org/project/vireoSNP
-.. _manual: https://vireoSNP.readthedocs.io/en/latest/manual.html
 .. _installation: https://vireoSNP.readthedocs.io/en/latest/install.html
 
 
@@ -68,36 +66,44 @@ See more introduction in the genotyping_ section.
 Demultiplexing from allelic expression
 --------------------------------------
 
-This python package offers a set of utilities functions and an executable 
-command line `vireo` for donor deconvolution in any of these four situations 
+The vireoSNP python package offers a set of utilities functions and an  
+executable command line `vireo` for donor deconvolution in any of these four 
+situations:
 
-1) without any genotype: 
+**Mode 1:** without any genotype: 
 
-   ::
+.. code-block:: bash
 
-      vireo -c $CELL_DATA -N $n_donor -o $OUT_DIR
+   vireo -c $CELL_DATA -N $n_donor -o $OUT_DIR
 
-2) with genotype for all samples (tag via -t: GT, GP, or PL)
+**Mode 2:** with genotype for all samples (specify tag ``-t``: GT, GP, or PL)
 
-   ::
+.. code-block:: bash
 
-      vireo -c $CELL_DATA -d $DONOR_GT_FILE -o $OUT_DIR
+   vireo -c $CELL_DATA -d $DONOR_GT_FILE -o $OUT_DIR
 
-3) with genotype for part of the samples
+**Mode 3:** with genotype for part of the samples (``N`` is different from the 
+sample number in ``$DONOR_GT_FILE``)
 
-   ::
+.. code-block:: bash
 
-      vireo -c $CELL_DATA -d $DONOR_GT_FILE -o $OUT_DIR -N $n_donor 
+   vireo -c $CELL_DATA -d $DONOR_GT_FILE -o $OUT_DIR -N $n_donor 
 
-4) with genotype but not confident
+**Mode 4:** with genotype but not confident
 
-   ::
+.. code-block:: bash
 
-      vireo -c $CELL_DATA -d $DONOR_GT_FILE -o $OUT_DIR --forceLearnGT
+   vireo -c $CELL_DATA -d $DONOR_GT_FILE -o $OUT_DIR --forceLearnGT
 
-The cell data can be any of the following two formats:
+In modes 3 and 4 are less common, the algorithm will run mode 1 first and then 
+match the estimated donor genotype and the given values (even partial). The 
+matched given genotype will replace the estiamted ones as prior in the second 
+run.
 
-* standard VCF file with variants by cells
+Note, the cell data (``$CELL_DATA``) via ``-c`` can be any of the following two 
+formats:
+
+* standard VCF file (compressed or uncompressed) with variants by cells
 * a cellSNP output folder containing VCF for variants info and sparse matrices 
   `AD` and `DP`
 
