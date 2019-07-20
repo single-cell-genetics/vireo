@@ -103,10 +103,10 @@ sample number in ``$DONOR_GT_FILE``)
 
    vireo -c $CELL_DATA -d $DONOR_GT_FILE -o $OUT_DIR --forceLearnGT
 
-In modes 3 and 4 are less common, the algorithm will run mode 1 first and then 
-match the estimated donor genotype and the given values (even partial). The 
-matched given genotype will replace the estiamted ones as prior in the second 
-run.
+In modes 3 and 4, the algorithm will run mode 1 first to estimate the genotypes 
+of ``N`` donors and match them to the given donor genotypes (even partial). For 
+the matched samples and SNPs, the input genotypes will replace the estiamted 
+values as a prior in the second run.
 
 Note, the cell data (``$CELL_DATA``) via ``-c`` can be any of the following two 
 formats:
