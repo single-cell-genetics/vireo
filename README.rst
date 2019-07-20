@@ -42,8 +42,16 @@ For more instructions, see the installation_ manual.
 .. _installation: https://vireoSNP.readthedocs.io/en/latest/install.html
 
 
-Usage and manual
-================
+Quick Usage
+===========
+
+The following two subsections are quick usage guide. For more details, see the 
+full manual_ or type ``vireo -h`` for all arguments. We also provide a demo.sh_ 
+for running the test data sets in this repo.
+
+.. _manual: https://vireoSNP.readthedocs.io/en/latest/manual.html
+.. _demo.sh: https://github.com/huangyh09/vireo/blob/master/demo.sh
+
 
 Genotyping for each cell (pre-step)
 -----------------------------------
@@ -106,12 +114,6 @@ formats:
 * standard VCF file (compressed or uncompressed) with variants by cells
 * a cellSNP output folder containing VCF for variants info and sparse matrices 
   `AD` and `DP`
-
-For details, see the full manual_ or type "vireo -h" for all arguments. We also 
-provide a demo.sh_ for running the test data sets in this repo.
-
-.. _manual: https://vireoSNP.readthedocs.io/en/latest/manual.html
-.. _demo.sh: https://github.com/huangyh09/vireo/blob/master/demo.sh
 
 
 Reference
