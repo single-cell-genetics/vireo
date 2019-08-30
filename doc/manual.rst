@@ -78,19 +78,25 @@ Type ``vireo -h`` for details of all arguments:
                               Dirtectory for output files [default:
                               $cellFilePath/vireo]
 
-      Optional arguments:
-      --noDoublet         If use, not checking doublets.
+      Optional input files:
+      --vartrixData=VARTRIX_DATA
+                              The cell genotype files in vartrix outputs (three
+                              files, comma separated): alt.mtx,ref.mtx,barcodes.tsv.
+                              This will suppress cellData argument.
       -d DONOR_FILE, --donorFile=DONOR_FILE
                               The donor genotype file in VCF format. Please filter
                               the sample and region with bcftools -s and -R first!
       -t GENO_TAG, --genoTag=GENO_TAG
                               The tag for donor genotype: GT, GP, PL [default: PL]
+
+      Optional arguments:
+      --noDoublet         If use, not checking doublets.
       -M N_INIT, --nInit=N_INIT
                               Number of random initializations [default: 2 (GT) or
                               50 (no GT)]
-      --amplifyK=K_AMPLIFY
-                              Pre-cluster with amplified K [default: 1.0 (GT) or 1.2
-                              (no GT)]
+      --extraDonor=N_EXTRA_DONOR
+                              Pre-cluster with extra n_donor [default: 0 (GT) or 1 +
+                              sqrt(n_donor) (no GT)]
       --forceLearnGT      If use, treat donor GT as prior only.
       --noPlot            If use, turn off plotting GT distance.
       --randSeed=RAND_SEED

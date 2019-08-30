@@ -18,8 +18,10 @@ def write_donor_id(out_dir, donor_names, cell_names, n_vars, res_vireo):
                                                               axis=1)]
 
     donor_ids = donor_singlet.copy()
+    donor_ids[prob_max < 0.9] = "unassigned"
     donor_ids[prob_doublet_out >= 0.9] = "doublet"
-    donor_ids[(prob_max < 0.9) * (n_vars < 10)] = "unassigned"
+    donor_ids[n_vars < 10] = "unassigned"
+
 
     ## save log file
     fid = open(out_dir + "/_log.txt", "w")
@@ -90,35 +92,28 @@ def write_donor_id(out_dir, donor_names, cell_names, n_vars, res_vireo):
 #     return svd.components_
 
 
-def heat_matrix(X, yticks=None, xticks=None, rotation=45, cmap='Blues', 
-    alpha=0.8, **kwargs):
+def heat_matrix(X, yticks=None, xticks=None, rotation=45, cmap='BuGn', 
+    alpha=0.6, **kwargs):
     """
     Plot heatmap of distance matrix
     """
     import matplotlib.pyplot as plt
-    
-    fig, ax = plt.subplots()
-    im = ax.imshow(X, cmap=cmap, alpha=alpha, **kwargs)
-    
-    if xticks:
-        ax.set_xticks(range(len(xticks)))
-        ax.set_xticklabels(xticks)
-    if yticks:
-        ax.set_yticks(range(len(yticks)))
-        ax.set_yticklabels(yticks)
+
+    im = plt.imshow(X, cmap=cmap, alpha=alpha, **kwargs)
+    plt.xticks(range(len(xticks)), xticks, rotation=rotation)
+    plt.yticks(range(len(yticks)), yticks)
 
     # Rotate the tick labels and set their alignment.
-    plt.setp(ax.get_xticklabels(), rotation=rotation, ha="right",
-             rotation_mode="anchor")
+    # plt.setp(ax.get_xticklabels(), rotation=rotation, ha="right",
+    #          rotation_mode="anchor")
     
     # Loop over data dimensions and create text annotations.
     for i in range(X.shape[0]):
         for j in range(X.shape[1]):
-            text = ax.text(j, i, "%.2f" %X[i, j],
-                           ha="center", va="center", color="k")
-
-    fig.tight_layout()
-    return fig, ax
+            plt.text(j, i, "%.2f" %X[i, j],
+                     ha="center", va="center", color="k")
+    
+    return im
 
 def plot_GT(out_dir, cell_GPb, donor_names, 
             donor_GPb=None, donor_names_in=None):
@@ -136,8 +131,9 @@ def plot_GT(out_dir, cell_GPb, donor_names,
 
     fig = plt.figure()
     heat_matrix(diff_mat, donor_names, donor_names)
-    plt.title("%d SNPs" %(cell_GPb.shape[0]))
-    plt.savefig(out_dir + "/fig_GT_distance_estimated.pdf", dpi=300)
+    plt.title("Geno Prob Delta: %d SNPs" %(cell_GPb.shape[0]))
+    plt.tight_layout()
+    fig.savefig(out_dir + "/fig_GT_distance_estimated.pdf", dpi=300)
 
     ## compare in the estimated sample with input samples
     if donor_GPb is not None:
@@ -149,6 +145,7 @@ def plot_GT(out_dir, cell_GPb, donor_names,
 
         fig = plt.figure()
         heat_matrix(diff_mat, donor_names, donor_names_in)
-        plt.title("%d SNPs" %(cell_GPb.shape[0]))
-        plt.savefig(out_dir + "/fig_GT_distance_input.pdf", dpi=300)
+        plt.title("Geno Prob Delta: %d SNPs" %(cell_GPb.shape[0]))
+        plt.tight_layout()
+        fig.savefig(out_dir + "/fig_GT_distance_input.pdf", dpi=300)
 

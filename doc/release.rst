@@ -2,6 +2,15 @@
 History
 =======
 
+Release v0.1.3 (30/08/2019)
+===========================
+* Support vartrix sparse matrices as input
+* Change --amplifyK to --extraDonor for extra donors in initial search
+* Fixed the bug for --noDoublet
+* Fixed a bug for unassigned
+* Minor update of figure output
+* Updated the submoduals for easier import
+
 Release v0.1.2 (15/07/2019)
 ===========================
 * Support sparse matrices as input (for cellSNP directory with `-O`)

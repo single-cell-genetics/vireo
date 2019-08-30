@@ -18,15 +18,18 @@ def parse_sample_info(sample_dat, sparse=True):
         return None
 
     # require the same format for all variants
-    format_all = [x[0] for x in sample_dat]
-    if format_all.count(format_all[0]) != len(format_all):
+    format_all = [x[0].split(":") for x in sample_dat]
+    format_list = format_all[0]
+
+    ## sparse matrix requires all keys
+    format_set_all = [set(x) for x in format_all]
+    if format_set_all.count(set(format_all[0])) != len(format_all):
         print("Error: require the same format for all variants.")
         exit()
-    format_list = format_all[0].split(":")
     
     RV = {}
-    for _format in format_list:
-        RV[_format] = []
+    for _key in format_list:
+        RV[_key] = []
     if sparse:
         RV['indices'] = []
         RV['indptr'] = [0]
@@ -36,22 +39,28 @@ def parse_sample_info(sample_dat, sparse=True):
         cnt = 0
         for j in range(len(sample_dat)): #variant j
             _line = sample_dat[j]
+            key_idx = [format_all[j].index(_key) for _key in format_list]
             for i in range(len(_line[1:])): #cell i
-                if _line[i+1] == missing_val:
+                if _line[i+1] == missing_val or _line[i+1] == ".":
                     continue
                 _line_key = _line[i+1].split(":")
                 for k in range(len(format_list)):
-                    RV[format_list[k]].append(_line_key[k])
+                    RV[format_list[k]].append(_line_key[key_idx[k]])
 
                 cnt += 1
                 RV['indices'].append(i)
             RV['indptr'].append(cnt)
     else:
-        for _line in sample_dat:
+        for j in range(len(sample_dat)): #variant j
+            _line = sample_dat[j]
             _line_split = [x.split(":") for x in _line[1:]]
-            for k in range(len(format_list)):
-                _line_key = [x[k] for x in _line_split]
-                RV[format_list[k]].append(_line_key)
+            for _key in format_list:
+                if _key in format_all[j]:
+                    k = format_all[j].index(_key)
+                    _line_key = [x[k] for x in _line_split]
+                    RV[_key].append(_line_key)
+                else:
+                    RV[_key].append(".")
     return RV
 
 
@@ -206,8 +215,10 @@ def write_VCF(out_file, VCF_dat, GenoTags=['GT', 'AD', 'DP', 'PL']):
         line = [VCF_dat['FixedINFO'][x][i] for x in VCF_COLUMN[:8]]
         line.append(":".join(GenoTags))
 
-        for d in range(len(VCF_dat['GenoINFO'][GenoTags[0]][0])):
-            _line_tag = [VCF_dat['GenoINFO'][x][i][d] for x in GenoTags]
+        # for d in range(len(VCF_dat['GenoINFO'][GenoTags[0]][0])):
+            # _line_tag = [VCF_dat['GenoINFO'][x][i][d] for x in GenoTags]
+        for s in range(len(VCF_dat['samples'])):
+            _line_tag = [VCF_dat['GenoINFO'][_tag][i][s] for _tag in GenoTags]
             line.append(":".join(_line_tag))
         fid_out.writelines("\t".join(line) + "\n")
     fid_out.close()
