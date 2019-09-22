@@ -12,7 +12,9 @@ vireo -c $CELL_FILE -N 4 -o $OUT_DIR --randSeed 2 #--amplifyK 1.5
 
 ## MODE 2: given genotype
 OUT_DIR=data/outs/cellSNP_PL
-vireo -c $CELL_FILE -d $DONOR_FILE -o $OUT_DIR --randSeed 2 #--genoTag PL
+vireo -c $CELL_FILE -d $DONOR_FILE -o $OUT_DIR -N 3 --randSeed 2 #--genoTag PL
+vireo -c $CELL_FILE -d $DONOR_FILE -o $OUT_DIR -N 4 --randSeed 2 #--genoTag PL
+vireo -c $CELL_FILE -d $DONOR_FILE -o $OUT_DIR -N 5 --randSeed 2 #--genoTag PL
 
 ## MODE 3: given genotype with learn
 OUT_DIR=data/outs/cellSNP_learn

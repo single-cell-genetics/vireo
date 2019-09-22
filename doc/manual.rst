@@ -38,7 +38,11 @@ to demultiplex scRNA-seq data.
 
       vireo -c $CELL_DATA -d $DONOR_GT_FILE -o $OUT_DIR
 
-3) with genotype for part of the samples
+   Optionally, `-N` can be provided if it is samller than that in DONOR_GT_FILE
+   for finding the relevant subset of donors.
+
+3) with genotype for part of the samples (n_donor is larger than that in 
+   DONOR_GT_FILE)
 
    ::
 
@@ -50,11 +54,12 @@ to demultiplex scRNA-seq data.
 
       vireo -c $CELL_DATA -d $DONOR_GT_FILE -o $OUT_DIR --forceLearnGT
 
-Viroe supports the cell data in two formats:
+Viroe supports the cell data in three formats:
 
-* standard VCF file with variants by cells
 * a cellSNP output folder containing VCF for variants info and sparse matrices 
-  ``AD`` and ``DP``
+  ``AD`` and ``DP`` (recommended)
+* standard VCF file with variants by cells
+* Vartrix outputs with three files: alt.mtx,ref.mtx,barcodes.tsv
 
 
 All arguments
@@ -78,7 +83,7 @@ Type ``vireo -h`` for details of all arguments:
                               Dirtectory for output files [default:
                               $cellFilePath/vireo]
 
-      Optional input files:
+   Optional input files:
       --vartrixData=VARTRIX_DATA
                               The cell genotype files in vartrix outputs (three
                               files, comma separated): alt.mtx,ref.mtx,barcodes.tsv.
@@ -89,14 +94,18 @@ Type ``vireo -h`` for details of all arguments:
       -t GENO_TAG, --genoTag=GENO_TAG
                               The tag for donor genotype: GT, GP, PL [default: PL]
 
-      Optional arguments:
+   Optional arguments:
       --noDoublet         If use, not checking doublets.
       -M N_INIT, --nInit=N_INIT
-                              Number of random initializations [default: 2 (GT) or
-                              50 (no GT)]
+                              Number of random initializations, when GT needs to
+                              learn [default: 50]
       --extraDonor=N_EXTRA_DONOR
-                              Pre-cluster with extra n_donor [default: 0 (GT) or 1 +
-                              sqrt(n_donor) (no GT)]
+                              Number of extra donor in pre-cluster, when GT needs to
+                              learn [default: sqrt(n_donor)]
+      --extraDonorMode=EXTRA_DONOR_MODE
+                              Method for searching from extra donors. size: n_cell
+                              per donor; distance: GT distance between donors
+                              [default: distance]
       --forceLearnGT      If use, treat donor GT as prior only.
       --noPlot            If use, turn off plotting GT distance.
       --randSeed=RAND_SEED

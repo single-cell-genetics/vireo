@@ -2,6 +2,16 @@
 History
 =======
 
+Release v0.1.4 (22/09/2019)
+===========================
+* Support that the case that input GT is larger than wanted `n_donor` 
+* Clarify the structure in vireo_flock: 1) warm-up for multiple initials or 
+  extra donors; 2) pre-step to subset or fill up the genotype prior; 3) the main
+  run.
+* Provide more options in the warm-up step to search donors from extra clusters.
+  Before, it only uses the size of the donor. Now, the genotype distance can be
+  used to search the K donors with furthest genotype distance.
+
 Release v0.1.3 (30/08/2019)
 ===========================
 * Support vartrix sparse matrices as input

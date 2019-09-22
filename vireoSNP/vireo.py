@@ -13,7 +13,7 @@ from optparse import OptionParser, OptionGroup
 
 from .version import __version__
 from .utils.vireo_base import match
-from .utils.vireo_model import vireo_core, vireo_flock
+from .utils.vireo_model import vireo_core, vireo_flock, greed_match
 from .utils.io_utils import write_donor_id, plot_GT
 from .utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
 from .utils.vcf_utils import read_sparse_GeneINFO, GenoINFO_maker
@@ -53,11 +53,16 @@ def main():
     group1 = OptionGroup(parser, "Optional arguments")
     group1.add_option("--noDoublet", dest="no_doublet", action="store_true", 
         default=False, help="If use, not checking doublets.")
-    group1.add_option("--nInit", "-M", type="int", dest="n_init", default=None,
-        help="Number of random initializations [default: 2 (GT) or 50 (no GT)]")
+    group1.add_option("--nInit", "-M", type="int", dest="n_init", default=50,
+        help=("Number of random initializations, when GT needs to learn "
+        "[default: %default]"))
     group1.add_option("--extraDonor", type=int, dest="n_extra_donor", 
-        default=None, help=("Pre-cluster with extra n_donor "
-        "[default: 0 (GT) or 1 + sqrt(n_donor) (no GT)]"))
+        default=None, help=("Number of extra donor in pre-cluster, when GT "
+        "needs to learn [default: sqrt(n_donor)]"))
+    group1.add_option("--extraDonorMode", dest="extra_donor_mode", 
+        default="distance", help=("Method for searching from extra donors. "
+        "size: n_cell per donor; distance: GT distance between donors "
+        "[default: %default]"))
     group1.add_option("--forceLearnGT", dest="force_learnGT", default=False, 
         action="store_true", help="If use, treat donor GT as prior only.")
     group1.add_option("--noPlot", dest="no_plot", default=False, 
@@ -152,10 +157,13 @@ def main():
                                            for x in idx1]
         print("[vireo] Loading donor VCF file, done.")
 
-        if n_donor is None or n_donor <= donor_GPb.shape[2]:
+        if n_donor is None or n_donor == donor_GPb.shape[2]:
             n_donor = donor_GPb.shape[2]
             donor_names = donor_vcf['samples']
             learn_GT = False
+        elif n_donor < donor_GPb.shape[2]:
+            learn_GT = False
+            donor_names = ['donor%d' %x for x in range(n_donor)]
         else:
             learn_GT = True
             donor_names = (donor_vcf['samples'] + 
@@ -167,18 +175,18 @@ def main():
 
     if options.force_learnGT:
         learn_GT = True
-    if options.n_init is None:
-        n_init = 50 if learn_GT else 2
-    else:
-        n_init = options.n_init
-    if options.n_extra_donor is None:
-        # n_extra_donor = 0
-        if learn_GT:
-            n_extra_donor = 1 + int(round(np.sqrt(n_donor)))
+    
+    # extra donor for initial search, only for learn_GT
+    n_extra_donor = 0
+    if learn_GT:
+        if options.n_extra_donor is None:
+            n_extra_donor = int(round(np.sqrt(n_donor)))
         else:
-            n_extra_donor = 0
-    else:
-        n_extra_donor = options.n_extra_donor
+            n_extra_donor = options.n_extra_donor        
+    
+    # number of initials, only for learn_GT
+    n_init = options.n_init if learn_GT else 1
+    
     check_doublet = options.no_doublet == False
 
     ## run vireo model (try multiple initializations)
@@ -186,8 +194,13 @@ def main():
         cell_dat['AD'].shape[1], n_donor, cell_dat['AD'].shape[0]))
     res_vireo = vireo_flock(cell_dat['AD'], cell_dat['DP'], n_donor=n_donor, 
         GT_prior=donor_GPb, learn_GT=learn_GT, n_init=n_init, 
-        n_extra_donor=n_extra_donor, check_doublet=check_doublet, 
-        random_seed=options.rand_seed)
+        n_extra_donor=n_extra_donor, extra_donor_mode=options.extra_donor_mode,
+        check_doublet=check_doublet, random_seed=options.rand_seed)
+
+    if (n_donor is not None and 
+        donor_GPb is not None and n_donor < donor_GPb.shape[2]):
+        idx = greed_match(res_vireo['GT_prob'], donor_GPb)
+        donor_names = [donor_vcf['samples'][x] for x in idx]
 
     ## save donor id for each cell
     write_donor_id(out_dir, donor_names, cell_names, n_vars, res_vireo)
