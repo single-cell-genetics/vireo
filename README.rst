@@ -42,78 +42,20 @@ For more instructions, see the installation_ manual.
 .. _installation: https://vireoSNP.readthedocs.io/en/latest/install.html
 
 
-Quick Usage
-===========
+Manual and examples
+===================
 
-The following two subsections are quick usage guide. For more details, see the 
-full manual_ or type ``vireo -h`` for all arguments. We also provide a demo.sh_ 
-for running the test data sets in this repo.
+The full manual is at https://vireoSNP.readthedocs.io 
+It includes more details on installation, `demultiplex usage`_, and preprocess 
+with genotyping_ cells.
 
-.. _manual: https://vireoSNP.readthedocs.io/en/latest/manual.html
+Test example data is included in this repo and demos can be found in demo.sh_.
+
+Also, type ``vireo -h`` for all arguments with the version you are using.
+
+.. _demultiplex usage: https://vireoSNP.readthedocs.io/en/latest/manual.html
 .. _demo.sh: https://github.com/huangyh09/vireo/blob/master/demo.sh
-
-
-Genotyping for each cell (pre-step)
------------------------------------
-There might be some bioinformatics efforts in this step, however, a few existing 
-software can provide a solution. There are often two steps for this:
-
-1) identify candidate SNPs: `known common SNPs`_ / freebayes_ / cellSNP_
-2) genotype candidate SNPs in each cell: cellSNP_ / vartrix_ / `bcftools mpileup`_
-
-See more introduction in the genotyping_ section.
-
-.. _known common SNPs: https://github.com/huangyh09/cellSNP#list-of-candidate-snps
-.. _freebayes: https://github.com/ekg/freebayes
-.. _cellSNP: https://github.com/huangyh09/cellSNP
-.. _vartrix: https://github.com/10XGenomics/vartrix
-.. _bcftools mpileup: http://www.htslib.org/doc/bcftools.html
 .. _genotyping: https://vireoSNP.readthedocs.io/en/latest/genotype.html
-
-
-Demultiplexing from allelic expression
---------------------------------------
-
-The vireoSNP python package offers a set of utilities functions and an  
-executable command line `vireo` for donor deconvolution in any of these four 
-situations:
-
-**Mode 1:** without any genotype: 
-
-.. code-block:: bash
-
-   vireo -c $CELL_DATA -N $n_donor -o $OUT_DIR
-
-**Mode 2:** with genotype for all samples (specify tag ``-t``: GT, GP, or PL)
-
-.. code-block:: bash
-
-   vireo -c $CELL_DATA -d $DONOR_GT_FILE -o $OUT_DIR
-
-**Mode 3:** with genotype for part of the samples (``N`` is different from the 
-sample number in ``$DONOR_GT_FILE``)
-
-.. code-block:: bash
-
-   vireo -c $CELL_DATA -d $DONOR_GT_FILE -o $OUT_DIR -N $n_donor 
-
-**Mode 4:** with genotype but not confident
-
-.. code-block:: bash
-
-   vireo -c $CELL_DATA -d $DONOR_GT_FILE -o $OUT_DIR --forceLearnGT
-
-In modes 3 and 4, the algorithm will run mode 1 first to estimate the genotypes 
-of ``N`` donors and match them to the given donor genotypes (even partial). For 
-the matched samples and SNPs, the input genotypes will replace the estiamted 
-values as a prior in the second run.
-
-Note, the cell data (``$CELL_DATA``) via ``-c`` can be any of the following two 
-formats:
-
-* standard VCF file (compressed or uncompressed) with variants by cells
-* a cellSNP output folder containing VCF for variants info and sparse matrices 
-  `AD` and `DP`
 
 
 Reference
