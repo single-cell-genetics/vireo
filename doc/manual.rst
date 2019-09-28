@@ -123,19 +123,19 @@ genotyping or for other targeted genoytping methods. Briefly, this algorithm
 prioritises variants with largest information gain in splitting samples.
 
 For any donor genotype file in VCF format, especially the output from Vireo, 
-`GT_donors.vireo.vcf.gz`, the `GTbarcode` function can be used to generate the 
-minimal set of discriminatory variants by the following command line:
+``GT_donors.vireo.vcf.gz``, the ``GTbarcode`` function can be used to generate 
+the minimal set of discriminatory variants by the following command line:
 
-   ::
+::
 
-      GTbarcode -i $dir/GT_donors.vireo.vcf.gz -o $dir/GT_barcodes.tsv --randSeed 1
+   GTbarcode -i $dir/GT_donors.vireo.vcf.gz -o $dir/GT_barcodes.tsv --randSeed 1
 
 By default, this function filters out variants with <20 UMIs or >0.05 reads 
 aligned other alleles except the annotated reference and alternative alleles. 
 In case the variants with homozygous alternative alleles are not wanted, the 
-arguments `--noHomoAlt` can be used. By default, this `GTbarcode` function will 
-also generate a figure for the identified genotype barcode, as following (based 
-on example data in the repo),
+arguments ``--noHomoAlt`` can be used. By default, this ``GTbarcode`` function 
+will also generate a figure for the identified genotype barcode, as following 
+(based on example data in the repo),
 
 .. image:: image/GT_barcodes.pdf
    :height: 100px

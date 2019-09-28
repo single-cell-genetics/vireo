@@ -33,6 +33,8 @@ def main():
         action="store_true", help="Turn off the plot for the barcode.")
     group0.add_option("--figSize", dest="fig_size", default="4,2", 
         help="Size for the output figure, comma separated [default: %default].")
+    group0.add_option("--figFormat", dest="fig_format", default="png", 
+        help="Format of output figure: png or pdf [default: %default].")
     group0.add_option("--randSeed", type="int", dest="rand_seed", default=None,
         help=("Seed for random pick variants with same information gain "
               "[default: %default]"))
@@ -115,7 +117,8 @@ def main():
         minicode_plot(res_barcodes[1], var_ids[res_barcodes[2]], 
             donor_vcf['samples'])
         plt.tight_layout()
-        fig.savefig(".".join(out_file.split(".")[:-1]) + ".pdf")
+        fig.savefig(".".join(out_file.split(".")[:-1]) + "." + 
+                    options.fig_format)
 
 
 if __name__ == "__main__":
