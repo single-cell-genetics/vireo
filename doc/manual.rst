@@ -62,8 +62,8 @@ Viroe supports the cell data in three formats:
 * Vartrix outputs with three files: alt.mtx,ref.mtx,barcodes.tsv
 
 
-All arguments
-=============
+Vireo full arguments
+====================
 
 Type ``vireo -h`` for details of all arguments:
 
@@ -113,8 +113,8 @@ Type ``vireo -h`` for details of all arguments:
 
 
 
-Identification of discriminatory variants
-=========================================
+Discriminatory variants
+=======================
 
 Given a set of variants for which estimated genotypes are available, the Vireo 
 software implements a heuristic to define a minimal and informative set of 
