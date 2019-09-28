@@ -51,7 +51,8 @@ setup(
 
     entry_points={
           'console_scripts': [
-              'vireo = vireoSNP.vireo:main'
+              'vireo = vireoSNP.vireo:main',
+              'GTbarcode = vireoSNP.GTbarcode:main'
               ],
           }, 
 

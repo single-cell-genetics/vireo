@@ -2,6 +2,10 @@
 History
 =======
 
+Release v0.1.5 (28/09/2019)
+===========================
+* Support genotype barcode generation
+
 Release v0.1.4 (22/09/2019)
 ===========================
 * Support that the case that input GT is larger than wanted `n_donor` 

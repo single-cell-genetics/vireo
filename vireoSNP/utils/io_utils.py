@@ -149,3 +149,32 @@ def plot_GT(out_dir, cell_GPb, donor_names,
         plt.tight_layout()
         fig.savefig(out_dir + "/fig_GT_distance_input.pdf", dpi=300)
 
+
+def minicode_plot(barcode_set, var_ids=None, sample_ids=None, 
+                  cmap="Set3"):
+    import matplotlib.pyplot as plt
+    
+    mat = np.zeros((len(barcode_set[0][1:]), len(barcode_set)))
+    for i in range(mat.shape[0]):
+        for j in range(mat.shape[1]):
+            mat[i, j] = float(barcode_set[j][i + 1])
+            
+    im = plt.imshow(mat, cmap=cmap)
+    for i in range(mat.shape[0]):
+        for j in range(mat.shape[1]):
+            plt.text(j, i, int(mat[i, j]), 
+                     ha="center", va="center", color="k")
+            
+    if var_ids is None:
+        var_ids = range(mat.shape[0])
+    plt.yticks(range(mat.shape[0]), var_ids)
+    
+    if sample_ids is None:
+        sample_ids = ["%s\nS%d" %(barcode_set[x], x)
+                      for x in range(mat.shape[1])]
+    else:
+        sample_ids = ["%s\n%s" %(barcode_set[x], sample_ids[x])
+                      for x in range(mat.shape[1])]
+    plt.xticks(range(mat.shape[1]), sample_ids)
+    
+    return im

@@ -112,6 +112,39 @@ Type ``vireo -h`` for details of all arguments:
                               Seed for random initialization [default: none]
 
 
+
+Identification of discriminatory variants
+=========================================
+
+Given a set of variants for which estimated genotypes are available, the Vireo 
+software implements a heuristic to define a minimal and informative set of 
+discriminatory variants. This set of variants can be used to perform qPCR-based 
+genotyping or for other targeted genoytping methods. Briefly, this algorithm 
+prioritises variants with largest information gain in splitting samples.
+
+For any donor genotype file in VCF format, especially the output from Vireo, 
+`GT_donors.vireo.vcf.gz`, the `GTbarcode` function can be used to generate the 
+minimal set of discriminatory variants by the following command line:
+
+   ::
+
+      GTbarcode -i $dir/GT_donors.vireo.vcf.gz -o $dir/GT_barcodes.tsv --randSeed 1
+
+By default, this function filters out variants with <20 UMIs or >0.05 reads 
+aligned other alleles except the annotated reference and alternative alleles. 
+In case the variants with homozygous alternative alleles are not wanted, the 
+arguments `--noHomoAlt` can be used. By default, this `GTbarcode` function will 
+also generate a figure for the identified genotype barcode, as following (based 
+on example data in the repo),
+
+.. image:: image/GT_barcodes.pdf
+   :height: 100px
+   :width: 200px
+   :scale: 50 %
+   :alt: identified discriminatory variants
+   :align: center
+
+
 Example data
 ============
 

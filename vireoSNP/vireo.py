@@ -127,7 +127,6 @@ def main():
         cell_dat = read_sparse_GeneINFO(cell_vcf['GenoINFO'], keys=['AD', 'DP'])
         cell_names = cell_vcf['samples']
         print("[vireo] Loading cell VCF file, done.")
-    n_vars = np.array(np.sum(cell_dat['DP'] > 0, axis=0)).reshape(-1)
 
     ## input donor genotype
     n_donor = options.n_donor
@@ -172,6 +171,8 @@ def main():
         learn_GT = True
         donor_GPb = None
         donor_names = ['donor%d' %x for x in range(n_donor)]
+
+    n_vars = np.array(np.sum(cell_dat['DP'] > 0, axis=0)).reshape(-1)
 
     if options.force_learnGT:
         learn_GT = True
