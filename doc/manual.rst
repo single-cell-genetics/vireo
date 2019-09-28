@@ -138,8 +138,8 @@ will also generate a figure for the identified genotype barcode, as following
 (based on example data in the repo),
 
 .. image:: image/GT_barcodes.png
-   :height: 100px
-   :width: 200px
+   :height: 400px
+   :width: 800px
    :scale: 50 %
    :alt: identified discriminatory variants
    :align: center
