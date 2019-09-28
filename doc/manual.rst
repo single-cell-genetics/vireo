@@ -137,7 +137,7 @@ arguments ``--noHomoAlt`` can be used. By default, this ``GTbarcode`` function
 will also generate a figure for the identified genotype barcode, as following 
 (based on example data in the repo),
 
-.. image:: image/GT_barcodes.pdf
+.. image:: image/GT_barcodes.png
    :height: 100px
    :width: 200px
    :scale: 50 %
