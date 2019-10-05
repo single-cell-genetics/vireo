@@ -2,6 +2,10 @@
 History
 =======
 
+Release v0.1.7 (05/10/2019)
+===========================
+* Support donor genotype vcf file with different FORMAT for different variants
+
 Release v0.1.6 (05/10/2019)
 ===========================
 * Fix a bug when variants in donor genotype are not in cell vcf file

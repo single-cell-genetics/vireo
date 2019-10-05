@@ -8,7 +8,7 @@ import gzip
 import subprocess
 import numpy as np
 
-def parse_sample_info(sample_dat, sparse=True):
+def parse_sample_info(sample_dat, sparse=True, format_list=None):
     """
     Parse genotype information for each sample
     Note, it requires the format for each variants to 
@@ -19,18 +19,19 @@ def parse_sample_info(sample_dat, sparse=True):
 
     # require the same format for all variants
     format_all = [x[0].split(":") for x in sample_dat]
-    format_list = format_all[0]
+    if format_list is None:
+        format_list = format_all[0]
 
-    ## sparse matrix requires all keys
-    format_set_all = [set(x) for x in format_all]
-    if format_set_all.count(set(format_all[0])) != len(format_all):
-        print("Error: require the same format for all variants.")
-        exit()
-    
     RV = {}
     for _key in format_list:
         RV[_key] = []
     if sparse:
+        ## sparse matrix requires all keys
+        format_set_all = [set(x) for x in format_all]
+        if format_set_all.count(set(format_list)) != len(format_all):
+            print("Error: require the same format for all variants.")
+            exit()
+
         RV['indices'] = []
         RV['indptr'] = [0]
         RV['shape'] = (len(sample_dat[0][1:]), len(sample_dat))
@@ -64,7 +65,8 @@ def parse_sample_info(sample_dat, sparse=True):
     return RV
 
 
-def load_VCF(vcf_file, biallelic_only=False, load_sample=True, sparse=True):
+def load_VCF(vcf_file, biallelic_only=False, load_sample=True, sparse=True,
+             format_list=None):
     """
     Load whole VCF file 
     -------------------
@@ -121,7 +123,7 @@ def load_VCF(vcf_file, biallelic_only=False, load_sample=True, sparse=True):
     RV["comments"]  = comment_lines
     if load_sample:
         RV["samples"]   = obs_ids
-        RV["GenoINFO"]  = parse_sample_info(obs_dat, sparse=sparse)
+        RV["GenoINFO"]  = parse_sample_info(obs_dat, sparse, format_list)
     return RV
 
 

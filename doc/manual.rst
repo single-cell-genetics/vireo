@@ -32,7 +32,8 @@ to demultiplex scRNA-seq data.
 
       vireo -c $CELL_DATA -N $n_donor -o $OUT_DIR
 
-2) with genotype for all samples (GT, GP, or PL)
+2) with genotype for all samples (genoTag: GT, GP, or PL; default is PL, please 
+   choose the existing one)
 
    ::
 
@@ -40,6 +41,10 @@ to demultiplex scRNA-seq data.
 
    Optionally, `-N` can be provided if it is samller than that in DONOR_GT_FILE
    for finding the relevant subset of donors.
+
+   **Note** For efficient loading of donor VCF file, we recommend subset it
+   ``bcftools view donor.vcf.gz -R cellSNP.cells.vcf.gz -Oz -o sub.vcf.gz``
+   Also, add ``-s`` or ``-S`` for subsetting samples. 
 
 3) with genotype for part of the samples (n_donor is larger than that in 
    DONOR_GT_FILE)
@@ -63,7 +68,7 @@ Viroe supports the cell data in three formats:
 
 
 Vireo full arguments
-====================
+--------------------
 
 Type ``vireo -h`` for details of all arguments:
 

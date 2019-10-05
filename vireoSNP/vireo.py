@@ -132,8 +132,8 @@ def main():
     n_donor = options.n_donor
     if options.donor_file is not None:
         print("[vireo] Loading donor VCF file ...")
-        donor_vcf = load_VCF(options.donor_file, sparse=False, 
-                             biallelic_only=True)
+        donor_vcf = load_VCF(options.donor_file, biallelic_only=True, 
+                             sparse=False, format_list=[options.geno_tag])
         if (options.geno_tag not in donor_vcf['GenoINFO']):
             print("[vireo] No " + options.geno_tag + " tag in donor genotype; " 
                 "please try another tag for genotype, e.g., GT")
