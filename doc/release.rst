@@ -2,6 +2,10 @@
 History
 =======
 
+Release v0.1.6 (05/10/2019)
+===========================
+* Fix a bug when variants in donor genotype are not in cell vcf file
+
 Release v0.1.5 (28/09/2019)
 ===========================
 * Support genotype barcode generation
