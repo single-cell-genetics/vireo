@@ -143,7 +143,7 @@ def main():
             options.geno_tag)
         
         mm_idx = match(cell_vcf['variants'], donor_vcf['variants'])
-        idx1 = np.where(mm_idx != None)[0]
+        idx1 = np.where(mm_idx == mm_idx)[0] #remove None
         idx2 = mm_idx[idx1].astype(int)
 
         donor_GPb = donor_GPb[idx2, :, :]
