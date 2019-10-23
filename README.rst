@@ -1,4 +1,4 @@
-|PyPI| |Docs| |Build Status|
+|PyPI| |Docs| |Build Status| |DOI|
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/vireoSNP.svg
     :target: https://pypi.org/project/vireoSNP
@@ -6,6 +6,8 @@
    :target: https://vireoSNP.readthedocs.io
 .. |Build Status| image:: https://travis-ci.org/huangyh09/vireo.svg?branch=master
    :target: https://travis-ci.org/huangyh09/vireo
+.. |DOI| image:: https://zenodo.org/badge/187803798.svg
+   :target: https://zenodo.org/badge/latestdoi/187803798
 
 
 ======================================================
