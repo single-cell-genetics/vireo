@@ -143,7 +143,15 @@ def main():
             options.geno_tag)
         
         mm_idx = match(cell_vcf['variants'], donor_vcf['variants'])
+        mm_idx = mm_idx.astype(float)
         idx1 = np.where(mm_idx == mm_idx)[0] #remove None
+        # TODO: check when chr is not compatible! given warning.
+        if len(idx1) == 0:
+            print("[vireo] warning: no variants matched to donor VCF, " + 
+                  "please check chr format!")
+        else:
+            print("[vireo] %d out %d variants matched to donor VCF" 
+                  %(len(idx1), len(cell_vcf['variants'])))
         idx2 = mm_idx[idx1].astype(int)
 
         donor_GPb = donor_GPb[idx2, :, :]
