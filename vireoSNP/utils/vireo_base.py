@@ -62,7 +62,7 @@ def get_ID_prob(AD, DP, GT_prob, theta_shapes, Psi=None):
         S1 = AD.transpose() * (GT_prob[:, ig, :] * _digmma1)
         S2 = BD.transpose() * (GT_prob[:, ig, :] * _digmma2)
         SS = DP.transpose() * (GT_prob[:, ig, :] * _digmmas)
-        logLik_ID += (S1 + S2 + SS)
+        logLik_ID += (S1 + S2 - SS)
     
     Psi_norm = np.log(Psi / np.sum(Psi))
     ID_prob = np.exp(loglik_amplify(logLik_ID + Psi_norm, axis=1))
@@ -138,19 +138,16 @@ def beta_entropy(X, X_prior=None):
     if X_prior is None:
         X_prior = X.copy()
     else:
-        for ii in range(X.shape[0]):
-            RV1 = (RV1 - betaln(X[ii, 0], X[ii, 1]) +
-                   (X[ii, 0] - 1) * digamma(X[ii, 0]) +
-                   (X[ii, 1] - 1) * digamma(X[ii, 1]) -
-                   (np.sum(X[ii, :]) - 2) * digamma(np.sum(X[ii, :])))
-    
-    RV2 = 0
-    for ii in range(X.shape[0]):
-        RV2 = (RV2 - betaln(X_prior[ii, 0], X_prior[ii, 1]) +
-               (X_prior[ii, 0] - 1) * digamma(X[ii, 0]) +
-               (X_prior[ii, 1] - 1) * digamma(X[ii, 1]) -
-               (np.sum(X_prior[ii, :]) - 2) * digamma(np.sum(X[ii, :])))
-        
+        RV1 = (- betaln(X[:, 0], X[:, 1]) + 
+               (X[:, 0] - 1) * digamma(X[:, 0]) + 
+               (X[:, 1] - 1) * digamma(X[:, 1]) - 
+               (X.sum(axis=1) - 2) * digamma(X.sum(axis=1)))
+
+    RV2 = (- betaln(X_prior[:, 0], X_prior[:, 1]) + 
+           (X_prior[:, 0] - 1) * digamma(X[:, 0]) + 
+           (X_prior[:, 1] - 1) * digamma(X[:, 1]) - 
+           (X_prior.sum(axis=1) - 2) * digamma(X.sum(axis=1)))
+
     return np.sum(RV1) - np.sum(RV2)
 
 

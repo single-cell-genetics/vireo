@@ -108,7 +108,7 @@ def vireo_flock(AD, DP, GT_prior=None, n_donor=None, n_extra_donor=2,
 
 
 def vireo_core(AD, DP, n_donor=None, GT_prior=None, learn_GT=True,
-    theta_prior=None, learn_theta=True, ASE_mode=True, 
+    theta_prior=None, learn_theta=True, ASE_mode=False, 
     Psi=None, ID_prob_init=None, doublet_prior=None, check_doublet=True, 
     min_iter=20, max_iter=100, min_GP=0.00001, epsilon_conv=1e-2, 
     random_seed=None, verbose=False):

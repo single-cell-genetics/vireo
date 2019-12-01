@@ -65,6 +65,8 @@ def main():
         "[default: %default]"))
     group1.add_option("--forceLearnGT", dest="force_learnGT", default=False, 
         action="store_true", help="If use, treat donor GT as prior only.")
+    group1.add_option("--ASEmode", dest="ASE_mode", default=False, 
+        action="store_true", help="If use, turn on SNP specific allelic ratio.")
     group1.add_option("--noPlot", dest="no_plot", default=False, 
         action="store_true", help="If use, turn off plotting GT distance.")
     group1.add_option("--randSeed", type="int", dest="rand_seed", default=None,
@@ -204,7 +206,8 @@ def main():
     res_vireo = vireo_flock(cell_dat['AD'], cell_dat['DP'], n_donor=n_donor, 
         GT_prior=donor_GPb, learn_GT=learn_GT, n_init=n_init, 
         n_extra_donor=n_extra_donor, extra_donor_mode=options.extra_donor_mode,
-        check_doublet=check_doublet, random_seed=options.rand_seed)
+        check_doublet=check_doublet, random_seed=options.rand_seed,
+        ASE_mode=options.ASE_mode)
 
     if (n_donor is not None and 
         donor_GPb is not None and n_donor < donor_GPb.shape[2]):
