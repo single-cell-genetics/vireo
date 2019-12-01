@@ -42,8 +42,9 @@ def get_theta_shapes(AD, DP, ID_prob, GT_prob, theta_prior):
     
     theta_shapes = theta_prior.copy()
     for ig in range(theta_shapes.shape[0]):
-        theta_shapes[ig, 0] += np.sum(S1_gt * GT_prob[:, ig, :])
-        theta_shapes[ig, 1] += np.sum(S2_gt * GT_prob[:, ig, :])
+        _axis = 1 if len(theta_shapes.shape) == 3 else None
+        theta_shapes[ig, 0] += np.sum(S1_gt * GT_prob[:, ig, :], axis=_axis)
+        theta_shapes[ig, 1] += np.sum(S2_gt * GT_prob[:, ig, :], axis=_axis)
     return theta_shapes
 
 def get_ID_prob(AD, DP, GT_prob, theta_shapes, Psi=None):
@@ -51,15 +52,17 @@ def get_ID_prob(AD, DP, GT_prob, theta_shapes, Psi=None):
     """
     if Psi is None:
         Psi = np.ones(GT_prob.shape[2]) / GT_prob.shape[2]
-        
+
+    BD = DP - AD
     logLik_ID = np.zeros((AD.shape[1], GT_prob.shape[2]))
     for ig in range(GT_prob.shape[1]):
-        S1 = AD.transpose() * GT_prob[:, ig, :]
-        SS = DP.transpose() * GT_prob[:, ig, :]
-        S2 = SS - S1
-        logLik_ID += (S1 * digamma(theta_shapes[ig, 0]) + 
-                      S2 * digamma(theta_shapes[ig, 1]) - 
-                      SS * digamma(np.sum(theta_shapes[ig, :])))
+        _digmma1 = digamma(theta_shapes[ig, 0]).reshape(-1, 1)
+        _digmma2 = digamma(theta_shapes[ig, 1]).reshape(-1, 1)
+        _digmmas = digamma(theta_shapes[ig, :].sum(axis=0)).reshape(-1, 1)
+        S1 = AD.transpose() * (GT_prob[:, ig, :] * _digmma1)
+        S2 = BD.transpose() * (GT_prob[:, ig, :] * _digmma2)
+        SS = DP.transpose() * (GT_prob[:, ig, :] * _digmmas)
+        logLik_ID += (S1 + S2 + SS)
     
     Psi_norm = np.log(Psi / np.sum(Psi))
     ID_prob = np.exp(loglik_amplify(logLik_ID + Psi_norm, axis=1))
@@ -82,9 +85,12 @@ def get_GT_prob(AD, DP, ID_prob, theta_shapes, GT_prior=None):
     
     logLik_GT = np.zeros(GT_prior.shape)
     for ig in range(logLik_GT.shape[1]):        
-        logLik_GT[:, ig, :] = (S1_gt * digamma(theta_shapes[ig, 0]) +
-                               S2_gt * digamma(theta_shapes[ig, 1]) - 
-                               SS_gt * digamma(np.sum(theta_shapes[ig, :])))
+        _digmma1 = digamma(theta_shapes[ig, 0]).reshape(-1, 1)
+        _digmma2 = digamma(theta_shapes[ig, 1]).reshape(-1, 1)
+        _digmmas = digamma(theta_shapes[ig, :].sum(axis=0)).reshape(-1, 1)
+        logLik_GT[:, ig, :] = (S1_gt * _digmma1 + 
+                               S2_gt * _digmma2 - 
+                               SS_gt * _digmmas)
         
     # += np.log(GT_prior)
     GT_prob = loglik_amplify(logLik_GT + np.log(GT_prior), axis=1)
@@ -145,7 +151,7 @@ def beta_entropy(X, X_prior=None):
                (X_prior[ii, 1] - 1) * digamma(X[ii, 1]) -
                (np.sum(X_prior[ii, :]) - 2) * digamma(np.sum(X[ii, :])))
         
-    return RV1 - RV2
+    return np.sum(RV1) - np.sum(RV2)
 
 
 def match(ref_ids, new_ids, uniq_ref_only=True):

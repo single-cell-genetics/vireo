@@ -8,7 +8,7 @@ mkdir data/outs/
 
 ## MODE 1: no genotype
 OUT_DIR=data/outs/cellSNP_noGT
-vireo -c $CELL_FILE -N 4 -o $OUT_DIR --randSeed 2 #--amplifyK 1.5
+vireo -c $CELL_FILE -N 4 -o $OUT_DIR --randSeed 2 # --extraDonor 0
 
 ## MODE 2: given genotype
 OUT_DIR=data/outs/cellSNP_PL
