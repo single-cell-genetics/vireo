@@ -8,7 +8,7 @@ import numpy as np
 from optparse import OptionParser, OptionGroup
 
 from .version import __version__
-from .utils.io_utils import minicode_plot
+from .plot.base_plot import minicode_plot
 from .utils.vireo_base import variant_select
 from .utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
 

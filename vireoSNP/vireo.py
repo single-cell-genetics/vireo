@@ -14,7 +14,9 @@ from optparse import OptionParser, OptionGroup
 from .version import __version__
 from .utils.vireo_base import match
 from .utils.vireo_model import vireo_core, vireo_flock, greed_match
-from .utils.io_utils import write_donor_id, plot_GT
+
+from .plot.base_plot import plot_GT
+from .utils.io_utils import write_donor_id
 from .utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
 from .utils.vcf_utils import read_sparse_GeneINFO, GenoINFO_maker
 
