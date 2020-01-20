@@ -108,9 +108,10 @@ def vireo_flock(AD, DP, GT_prior=None, n_donor=None, n_extra_donor=2,
 
 
 def vireo_core(AD, DP, n_donor=None, GT_prior=None, learn_GT=True,
-    theta_prior=None, learn_theta=True, Psi=None, ID_prob_init=None, 
-    doublet_prior=None, check_doublet=True, min_iter=20, max_iter=100, 
-    min_GP=0.00001, epsilon_conv=1e-2, random_seed=None, verbose=False):
+    theta_prior=None, learn_theta=True, ASE_mode=False, 
+    Psi=None, ID_prob_init=None, doublet_prior=None, check_doublet=True, 
+    min_iter=20, max_iter=100, min_GP=0.00001, epsilon_conv=1e-2, 
+    random_seed=None, verbose=False):
     """
     Vireo core function to cluster the cells into donors.
     """
@@ -131,6 +132,9 @@ def vireo_core(AD, DP, n_donor=None, GT_prior=None, learn_GT=True,
         #theta_prior = np.array([[0.3, 29.7], [3, 3], [29.7, 0.3]])
         theta_prior = np.array([[0.1, 99.9], [50, 50], [99.9, 0.1]])
     theta_shapes = theta_prior.copy()
+    if ASE_mode and len(theta_prior.shape) == 2:
+        theta_prior = np.repeat(np.expand_dims(theta_prior, 2), n_var, axis=2)
+        theta_shapes = np.repeat(np.expand_dims(theta_shapes, 2), n_var, axis=2)
     n_gt = theta_shapes.shape[0] # number of genotype categories
 
     ## initialize Psi
@@ -272,14 +276,17 @@ def add_doublet_theta(theta_shapes):
     combn_iter = itertools.combinations(range(theta_shapes.shape[0]), 2)
     db_idx = np.array([x for x in combn_iter])
 
-    theta_shapes2 = np.zeros((db_idx.shape))
-    for ii in range(theta_shapes2.shape[0]):
-        theta_use  = theta_shapes[db_idx[ii, :], :]
-        theta_mean = np.mean(tensor_normalize(theta_use, axis=1), axis=0)
-        shape_sum  = np.sqrt(np.sum(theta_use[0, :]) * np.sum(theta_use[1, :]))
-        theta_shapes2[ii, :] = theta_mean * shape_sum
+    _theta_p1 = theta_shapes[db_idx[:, 0]]
+    _theta_p2 = theta_shapes[db_idx[:, 1]]
 
-    return np.append(theta_shapes, theta_shapes2, axis=0)
+    _theta_mean = (tensor_normalize(_theta_p1, axis=1) + 
+                   tensor_normalize(_theta_p2, axis=1)) / 2.0
+    _theta_sum  = np.sqrt(np.sum(_theta_p1, axis=1, keepdims=True) * 
+                          np.sum(_theta_p2, axis=1, keepdims=True))
+    
+    theta_shapes_db = _theta_mean * _theta_sum
+
+    return np.append(theta_shapes, theta_shapes_db, axis=0)
 
 
 def add_doublet_GT(GT_prob):

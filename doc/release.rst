@@ -2,6 +2,10 @@
 History
 =======
 
+Release v0.2.0 (1/12/2019)
+===========================
+* Support SNP specific allelic ratio, namely theta parameters
+
 Release v0.1.8 (29/10/2019)
 ===========================
 * Further fix the bug when variants in donor genotype are not in cell vcf file
