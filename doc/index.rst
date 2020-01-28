@@ -3,7 +3,7 @@ Home
 ====
 
 .. :Author: Yuanhua Huang
-.. :Version: 0.1.1
+.. :Version: 0.2.0
 .. :Last viewed: Jun 30, 2019
 
 About Vireo
@@ -75,6 +75,6 @@ References
 
 Yuanhua Huang, Davis J. McCarthy, and Oliver Stegle. `Vireo: Bayesian 
 demultiplexing of pooled single-cell RNA-seq data without genotype reference 
-<https://www.biorxiv.org/content/10.1101/598748v1>`_. 
-\ **bioRxiv** \ (2019): 598748.
+<https://genomebiology.biomedcentral.com/articles/10.1186/s13059-019-1865-2>`_. 
+\ **Genome Biology** \ 20, 273 (2019)
 

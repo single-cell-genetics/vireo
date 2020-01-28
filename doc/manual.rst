@@ -106,12 +106,13 @@ Type ``vireo -h`` for details of all arguments:
                               learn [default: 50]
       --extraDonor=N_EXTRA_DONOR
                               Number of extra donor in pre-cluster, when GT needs to
-                              learn [default: sqrt(n_donor)]
+                              learn [default: 0]
       --extraDonorMode=EXTRA_DONOR_MODE
                               Method for searching from extra donors. size: n_cell
                               per donor; distance: GT distance between donors
                               [default: distance]
       --forceLearnGT      If use, treat donor GT as prior only.
+      --ASEmode           If use, turn on SNP specific allelic ratio.
       --noPlot            If use, turn off plotting GT distance.
       --randSeed=RAND_SEED
                               Seed for random initialization [default: none]
@@ -150,6 +151,16 @@ will also generate a figure for the identified genotype barcode, as following
    :align: center
 
 
+vireoSNP module usage
+=====================
+Besides the command line usage for designed donor deconvolution, we also provide 
+tutorials on the usage of vireoSNP as a standard Python module for both donor 
+deconvolution and general cell clustering based on allelic ratio: 
+vireoSNP_usage.ipynb_
+
+.. _vireoSNP_usage.ipynb: https://github.com/single-cell-genetics/vireo/blob/master/examples/vireoSNP_usage.ipynb
+
+
 Example data
 ============
 
@@ -161,5 +172,5 @@ four samples are also provided.
 
 .. _genotyping: https://vireoSNP.readthedocs.io/en/latest/genotype.html
 .. _cellSNP: https://github.com/huangyh09/cellSNP
-.. _demo scripts: https://github.com/huangyh09/vireo/blob/master/demo.sh
+.. _demo scripts: https://github.com/huangyh09/vireo/blob/master/examples/demo.sh
 .. _data set: https://github.com/huangyh09/vireo/tree/master/data

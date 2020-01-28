@@ -59,8 +59,8 @@ def main():
         help=("Number of random initializations, when GT needs to learn "
         "[default: %default]"))
     group1.add_option("--extraDonor", type=int, dest="n_extra_donor", 
-        default=None, help=("Number of extra donor in pre-cluster, when GT "
-        "needs to learn [default: sqrt(n_donor)]"))
+        default=0, help=("Number of extra donor in pre-cluster, when GT "
+        "needs to learn [default: %default]"))
     group1.add_option("--extraDonorMode", dest="extra_donor_mode", 
         default="distance", help=("Method for searching from extra donors. "
         "size: n_cell per donor; distance: GT distance between donors "
@@ -192,7 +192,7 @@ def main():
     # extra donor for initial search, only for learn_GT
     n_extra_donor = 0
     if learn_GT:
-        if options.n_extra_donor is None:
+        if options.n_extra_donor is None or options.n_extra_donor == "None":
             n_extra_donor = int(round(np.sqrt(n_donor)))
         else:
             n_extra_donor = options.n_extra_donor        

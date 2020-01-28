@@ -2,9 +2,14 @@
 History
 =======
 
-Release v0.2.0 (1/12/2019)
+Release v0.2.0 (28/01/2020)
 ===========================
-* Support SNP specific allelic ratio, namely theta parameters
+* Support SNP specific allelic ratio, namely theta parameters. Note, SNP based 
+  ASE mode requires a much stronger prior on theta to avoid overfitting, as each
+  variant has very low number of reads. 
+* Change the default extraDonor to 0.
+* Provide examples/vireoSNP_usage.ipynb for using vireoSNP as a Python module 
+  for general cell clustering based on allelic ratio.
 
 Release v0.1.8 (29/10/2019)
 ===========================

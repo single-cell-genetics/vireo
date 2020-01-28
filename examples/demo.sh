@@ -1,5 +1,7 @@
 #!/bin/sh
 
+cd ../
+
 ## Input files
 CELL_FILE=data/cells.cellSNP.vcf.gz
 DONOR_FILE=data/donors.cellSNP.vcf.gz

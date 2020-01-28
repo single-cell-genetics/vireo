@@ -24,6 +24,18 @@ while the Python package name is vireoSNP_ to aviod name confilict on PyPI.
 .. _vireoSNP: https://pypi.org/project/vireoSNP
 
 
+News
+====
+All release notes can be found in doc/release.rst_.
+
+.. _release.rst: https://github.com/single-cell-genetics/vireo/blob/master/doc/release.rst
+
+Usage of vireoSNP Python module for donor deconvolution and general cell 
+clustering based on allelic ratio: vireoSNP_usage.ipynb_
+
+.. _vireoSNP_usage.ipynb: https://github.com/single-cell-genetics/vireo/blob/master/examples/vireoSNP_usage.ipynb
+
+
 Installation
 ============
 
@@ -51,12 +63,12 @@ The full manual is at https://vireoSNP.readthedocs.io
 It includes more details on installation, `demultiplex usage`_, and preprocess 
 with genotyping_ cells.
 
-Test example data is included in this repo and demos can be found in demo.sh_.
+Test example data is included in this repo and demos can be found in examples/demo.sh_.
 
 Also, type ``vireo -h`` for all arguments with the version you are using.
 
 .. _demultiplex usage: https://vireoSNP.readthedocs.io/en/latest/manual.html
-.. _demo.sh: https://github.com/huangyh09/vireo/blob/master/demo.sh
+.. _demo.sh: https://github.com/huangyh09/vireo/blob/master/examples/demo.sh
 .. _genotyping: https://vireoSNP.readthedocs.io/en/latest/genotype.html
 
 
@@ -65,5 +77,5 @@ Reference
 
 Yuanhua Huang, Davis J. McCarthy, and Oliver Stegle. `Vireo: Bayesian 
 demultiplexing of pooled single-cell RNA-seq data without genotype reference 
-<https://www.biorxiv.org/content/10.1101/598748v1>`_. 
-\ **bioRxiv** \ (2019): 598748.
+<https://genomebiology.biomedcentral.com/articles/10.1186/s13059-019-1865-2>`_. 
+\ **Genome Biology** \ 20, 273 (2019)
