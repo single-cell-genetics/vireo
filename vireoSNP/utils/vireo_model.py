@@ -85,6 +85,8 @@ def vireo_flock(AD, DP, GT_prior=None, n_donor=None, n_extra_donor=2,
         GT_prior_use = res1['GT_prob']
         idx = greed_match(GT_prior, GT_prior_use)
         GT_prior_use[:, :, idx] = GT_prior
+        _idx_order = np.append(idx, np.delete(np.arange(n_donor), idx))
+        GT_prior_use = GT_prior_use[:, :, _idx_order]
 
         _donor_cnt = np.sum(res1['ID_prob'], axis=0) 
         idx_ordered = np.append(idx, np.delete(np.arange(n_donor), idx))

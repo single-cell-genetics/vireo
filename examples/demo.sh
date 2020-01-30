@@ -22,6 +22,11 @@ vireo -c $CELL_FILE -d $DONOR_FILE -o $OUT_DIR -N 5 --randSeed 2 #--genoTag PL
 OUT_DIR=data/outs/cellSNP_learn
 vireo -c $CELL_FILE -d $DONOR_FILE -o $OUT_DIR --randSeed 2 -N 4 --forceLearnGT
 
+## MODE 4: given genotype
+OUT_DIR=data/outs/cellSNP_part
+DONOR_FILE=data/donors.two.cellSNP.vcf.gz
+vireo -c $CELL_FILE -d $DONOR_FILE -o $OUT_DIR -N 4 --randSeed 2
+
 ## Generating genotype barcodes
 donor_vcf=data/outs/cellSNP_noGT/GT_donors.vireo.vcf.gz
 GTbarcode -i $donor_vcf -o data/outs/cellSNP_noGT/GT_barcodes.tsv --randSeed 1 # --noHomoAlt

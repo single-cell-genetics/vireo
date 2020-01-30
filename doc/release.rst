@@ -2,6 +2,11 @@
 History
 =======
 
+Release v0.2.1 (30/01/2020)
+===========================
+* Fix a bug when the donors in the input GT is smaller than donors in the pooled
+  scRNA-seq. The sample id is now corrected.
+
 Release v0.2.0 (28/01/2020)
 ===========================
 * Support SNP specific allelic ratio, namely theta parameters. Note, SNP based 
