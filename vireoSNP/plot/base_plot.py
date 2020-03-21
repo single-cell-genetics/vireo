@@ -2,6 +2,9 @@
 
 import numpy as np
 
+WeiZhu_colors = np.array(['#4796d7', '#f79e54', '#79a702', '#df5858', '#556cab', 
+                          '#de7a1f', '#ffda5c', '#4b595c', '#6ab186', '#bddbcf', 
+                          '#daad58', '#488a99', '#f79b78', '#ffba00'])
 
 def heat_matrix(X, yticks=None, xticks=None, rotation=45, cmap='BuGn', 
                 alpha=0.6, display_value=True, row_sort=False, 
@@ -18,8 +21,10 @@ def heat_matrix(X, yticks=None, xticks=None, rotation=45, cmap='BuGn',
     im = plt.imshow(X, cmap=cmap, alpha=alpha, aspect=aspect, **kwargs)
     if xticks is not None:
         plt.xticks(range(len(xticks)), xticks, rotation=rotation)
+        plt.xlim(-0.5, len(xticks) - 0.5)
     if yticks is not None:
         plt.yticks(range(len(yticks)), yticks)
+        plt.ylim(-0.5, len(yticks) - 0.5)
     
     # Loop over data dimensions and create text annotations.
     if display_value:
@@ -39,11 +44,11 @@ def plot_GT(out_dir, cell_GPb, donor_names,
     import matplotlib.pyplot as plt
 
     ## compare the GT probability of estimated samples
-    diff_mat = np.zeros((cell_GPb.shape[2], cell_GPb.shape[2]))
-    for i in range(cell_GPb.shape[2]):
-        for j in range(cell_GPb.shape[2]):
-            diff_mat[i,j] = np.mean(np.abs(cell_GPb[:, :, i] - 
-                                           cell_GPb[:, :, j]))
+    diff_mat = np.zeros((cell_GPb.shape[1], cell_GPb.shape[1]))
+    for i in range(cell_GPb.shape[1]):
+        for j in range(cell_GPb.shape[1]):
+            diff_mat[i,j] = np.mean(np.abs(cell_GPb[:, i, :] - 
+                                           cell_GPb[:, j, :]))
 
     fig = plt.figure()
     heat_matrix(diff_mat, donor_names, donor_names)
@@ -53,11 +58,11 @@ def plot_GT(out_dir, cell_GPb, donor_names,
 
     ## compare in the estimated sample with input samples
     if donor_GPb is not None:
-        diff_mat = np.zeros((cell_GPb.shape[2], donor_GPb.shape[2]))
-        for i in range(cell_GPb.shape[2]):
-            for j in range(donor_GPb.shape[2]):
-                diff_mat[i,j] = np.mean(np.abs(cell_GPb[:, :, i] - 
-                                               donor_GPb[:, :, j]))
+        diff_mat = np.zeros((cell_GPb.shape[1], donor_GPb.shape[1]))
+        for i in range(cell_GPb.shape[1]):
+            for j in range(donor_GPb.shape[1]):
+                diff_mat[i,j] = np.mean(np.abs( cell_GPb[:, i, :] - 
+                                               donor_GPb[:, j, :]))
 
         fig = plt.figure()
         heat_matrix(diff_mat, donor_names, donor_names_in)
@@ -83,7 +88,8 @@ def minicode_plot(barcode_set, var_ids=None, sample_ids=None,
             
     if var_ids is None:
         var_ids = range(mat.shape[0])
-    plt.yticks(range(mat.shape[0]), var_ids)
+    plt.yticks(range(len(var_ids)), var_ids)
+    plt.ylim(-0.5, len(var_ids) - 0.5)
     
     if sample_ids is None:
         sample_ids = ["%s\nS%d" %(barcode_set[x], x)
@@ -91,11 +97,25 @@ def minicode_plot(barcode_set, var_ids=None, sample_ids=None,
     else:
         sample_ids = ["%s\n%s" %(barcode_set[x], sample_ids[x])
                       for x in range(mat.shape[1])]
-    plt.xticks(range(mat.shape[1]), sample_ids)
-    
+    plt.xticks(range(len(sample_ids)), sample_ids)
+    plt.xlim(-0.5, len(sample_ids) - 0.5)
+
     return im
 
-
+def anno_heat(X, anno, **kwargs):
+    import seaborn as sns
+    idx = np.argsort(np.dot(X, 2**np.arange(X.shape[1])) + 
+                     anno * 2**X.shape[1])
+    g = sns.clustermap(X[idx], cmap="GnBu", yticklabels=False,
+                       col_cluster=False, row_cluster=False,
+                       row_colors=WeiZhu_colors[anno][idx], **kwargs)
+    
+    for label in np.unique(anno):
+        g.ax_col_dendrogram.bar(0, 0, color=WeiZhu_colors[label],
+                                label=label, linewidth=0)
+    g.ax_col_dendrogram.legend(loc="center", ncol=6, title="True clone")
+    g.cax.set_position([.95, .2, .03, .45])
+    return g
 
 # def ppca_plot(AD, DP):
 #     """

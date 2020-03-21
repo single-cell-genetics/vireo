@@ -2,6 +2,13 @@
 History
 =======
 
+
+Release v0.2.2 (21/03/2020)
+===========================
+* Change GP_prob's shape from (n_var, n_GT, n_donor) to (n_var, n_donor, n_GT)
+* Restructure the codes for further upgrading
+* Minor fix the GT_plot xlim and ylim
+
 Release v0.2.1 (30/01/2020)
 ===========================
 * Fix a bug when the donors in the input GT is smaller than donors in the pooled

@@ -5,5 +5,14 @@ from .utils import vireo_base as base
 from .utils import vireo_model as model
 
 from .utils.vcf_utils import load_VCF
-from .utils.vireo_base import tensor_normalize, loglik_amplify
-from .utils.vireo_model import vireo_core, vireo_flock
+from .utils.io_utils import read_cellSNP, read_vartrix
+from .utils.vireo_base import normalize, loglik_amplify, get_binom_coeff
+
+from .utils.vireo_wrap import vireo_flock
+from .utils.vireo_model import vireo_core
+
+__all__ = [
+    "__version__",
+    "utils",
+    "plot",
+]

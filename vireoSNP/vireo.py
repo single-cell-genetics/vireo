@@ -13,10 +13,10 @@ from optparse import OptionParser, OptionGroup
 
 from .version import __version__
 from .utils.vireo_base import match
-from .utils.vireo_model import vireo_core, vireo_flock, greed_match
+from .utils.vireo_wrap import vireo_flock, greed_match
 
 from .plot.base_plot import plot_GT
-from .utils.io_utils import write_donor_id
+from .utils.io_utils import write_donor_id, read_cellSNP, read_vartrix
 from .utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
 from .utils.vcf_utils import read_sparse_GeneINFO, GenoINFO_maker
 
@@ -43,9 +43,9 @@ def main():
 
     group0 = OptionGroup(parser, "Optional input files")
     group0.add_option("--vartrixData", dest="vartrix_data", default=None,
-        help=("The cell genotype files in vartrix outputs (three files, comma "
-              "separated): alt.mtx,ref.mtx,barcodes.tsv. This will suppress "
-              "cellData argument."))
+        help=("The cell genotype files in vartrix outputs (three/four files, "
+              "comma separated): alt.mtx,ref.mtx,barcodes.tsv,SNPs.vcf.gz. "
+              "This will suppress cellData argument."))
     group0.add_option("--donorFile", "-d", dest="donor_file", default=None,
         help=("The donor genotype file in VCF format. Please filter the sample "
         "and region with bcftools -s and -R first!"))
@@ -104,37 +104,34 @@ def main():
     elif options.vartrix_data is not None:
         print("[vireo] Loading vartrix files ...")
         vartrix_files = options.vartrix_data.split(",")
-        if (len(vartrix_files) != 3):
-            print("Error: vartrixData requires exactly 3 comma separated files")
+        if len(vartrix_files) < 3 or len(vartrix_files) > 4:
+            print("Error: vartrixData requires 3 or 4 comma separated files")
             sys.exit(1)
+        elif len(vartrix_files) == 3:
+            vartrix_files.append(None)
 
-        cell_dat = {}
-        cell_dat['AD'] = mmread(options.vartrix_data.split(",")[0]).tocsc()
-        cell_dat['DP'] = mmread(options.vartrix_data.split(",")[1]).tocsc()
-        cell_dat['DP'] = cell_dat['DP'] + cell_dat['AD']
-        cell_names = np.genfromtxt(vartrix_files[2], dtype=str)
+        cell_dat = read_vartrix(vartrix_files[0], vartrix_files[1], 
+                                vartrix_files[2], vartrix_files[3])
         print("[vireo] Loading vartrix files, done.")
     elif os.path.isdir(os.path.abspath(options.cell_data)):
         print("[vireo] Loading cell folder ...")
-        cell_vcf = load_VCF(options.cell_data + "/cellSNP.base.vcf.gz", 
-            load_sample=False) #biallelic_only=True
-        cell_names = np.genfromtxt(options.cell_data + 
-            "/cellSNP.samples.tsv", dtype=str)
-
-        cell_dat = {}
-        cell_dat['AD'] = mmread(options.cell_data + "/cellSNP.tag.AD.mtx").tocsc()
-        cell_dat['DP'] = mmread(options.cell_data + "/cellSNP.tag.DP.mtx").tocsc()
+        cell_dat = read_cellSNP(options.cell_data)
         print("[vireo] Loading cell foder, done.")
     else:
         print("[vireo] Loading cell VCF file ...")
         cell_vcf = load_VCF(options.cell_data, biallelic_only=True)
         cell_dat = read_sparse_GeneINFO(cell_vcf['GenoINFO'], keys=['AD', 'DP'])
-        cell_names = cell_vcf['samples']
+        for _key in ['samples', 'variants', 'FixedINFO', 'contigs', 'comments']:
+            cell_dat[_key] = cell_vcf[_key]
         print("[vireo] Loading cell VCF file, done.")
 
     ## input donor genotype
     n_donor = options.n_donor
     if options.donor_file is not None:
+        if "variants" not in cell_dat.keys():
+            print("No variants information is loaded, please provide base.vcf.gz")
+            sys.exit(1)
+        
         print("[vireo] Loading donor VCF file ...")
         donor_vcf = load_VCF(options.donor_file, biallelic_only=True, 
                              sparse=False, format_list=[options.geno_tag])
@@ -146,7 +143,7 @@ def main():
         donor_GPb = parse_donor_GPb(donor_vcf['GenoINFO'][options.geno_tag], 
             options.geno_tag)
         
-        mm_idx = match(cell_vcf['variants'], donor_vcf['variants'])
+        mm_idx = match(cell_dat['variants'], donor_vcf['variants'])
         mm_idx = mm_idx.astype(float)
         idx1 = np.where(mm_idx == mm_idx)[0] #remove None
         # TODO: check when chr is not compatible! given warning.
@@ -155,17 +152,16 @@ def main():
                   "please check chr format!")
         else:
             print("[vireo] %d out %d variants matched to donor VCF" 
-                  %(len(idx1), len(cell_vcf['variants'])))
+                  %(len(idx1), len(cell_dat['variants'])))
         idx2 = mm_idx[idx1].astype(int)
 
         donor_GPb = donor_GPb[idx2, :, :]
         cell_dat['AD'] = cell_dat['AD'][idx1, :]
         cell_dat['DP'] = cell_dat['DP'][idx1, :]
-
-        cell_vcf["variants"]  = [cell_vcf["variants"][x] for x in idx1]
-        for _key in cell_vcf["FixedINFO"].keys():
-            cell_vcf["FixedINFO"][_key] = [cell_vcf["FixedINFO"][_key][x] 
-                                           for x in idx1]
+        cell_dat["variants"]  = [cell_dat["variants"][x] for x in idx1]
+        for _key in cell_dat["FixedINFO"].keys():
+            cell_dat["FixedINFO"][_key] = [
+                cell_dat["FixedINFO"][_key][x] for x in idx1]
         print("[vireo] Loading donor VCF file, done.")
 
         if n_donor is None or n_donor == donor_GPb.shape[2]:
@@ -178,7 +174,7 @@ def main():
         else:
             learn_GT = True
             donor_names = (donor_vcf['samples'] + 
-                ['donor%d' %x for x in range(donor_GPb.shape[2], n_donor)])
+                ['donor%d' %x for x in range(donor_GPb.shape[1], n_donor)])
     else:
         learn_GT = True
         donor_GPb = None
@@ -217,7 +213,7 @@ def main():
         donor_names = [donor_vcf['samples'][x] for x in idx]
 
     ## save donor id for each cell
-    write_donor_id(out_dir, donor_names, cell_names, n_vars, res_vireo)
+    write_donor_id(out_dir, donor_names, cell_dat['samples'], n_vars, res_vireo)
 
     if options.no_plot == False and options.vartrix_data is None:
         idx = np.array(np.sum(cell_dat['DP'], axis=1) > (3*n_donor)).reshape(-1)
@@ -228,8 +224,8 @@ def main():
             plot_GT(out_dir, res_vireo['GT_prob'][idx, :, :], donor_names)
 
     # ## save inferred donor genotype
-    if learn_GT and options.vartrix_data is None:
-        donor_vcf_out = cell_vcf
+    if learn_GT and 'variants' in cell_dat.keys():
+        donor_vcf_out = cell_dat
         donor_vcf_out['samples'] = donor_names
         donor_vcf_out['GenoINFO'] = GenoINFO_maker(res_vireo['GT_prob'], 
             cell_dat['AD'] * res_vireo['ID_prob'], 

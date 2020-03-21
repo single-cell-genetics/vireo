@@ -18,7 +18,7 @@ exec(open("./vireoSNP/version.py").read())
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
     
-reqs = ['numpy>=1.9.0', 'scipy>=1.0', 'matplotlib'] #, 'h5py'
+reqs = ['numpy>=1.9.0', 'scipy>=1.4.0', 'matplotlib'] #, 'h5py'
 
 setup(
     name='vireoSNP',

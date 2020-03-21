@@ -8,106 +8,9 @@
 import sys
 import itertools
 import numpy as np
-import multiprocessing
-from .vireo_base import get_ID_prob, get_GT_prob, get_theta_shapes
-from .vireo_base import VB_lower_bound, tensor_normalize, loglik_amplify
-
-def show_progress(RV=None):
-    return RV
-
-def vireo_flock(AD, DP, GT_prior=None, n_donor=None, n_extra_donor=2, 
-                extra_donor_mode="distance", n_init=20, random_seed=None, 
-                check_doublet=True, **kwargs):
-    """
-    A wrap function to run vireo twice, with the first step searching many 
-    initialations.
-    """
-    ## random seed setting
-    if random_seed is not None:
-        np.random.seed(random_seed)
-
-    if n_donor is None:
-        if GT_prior is None:
-            print("[vireo] Error: requiring n_donor or GT_prior.")
-            sys.exit()
-        else:
-            n_donor = GT_prior.shape[2]
-
-    ## warm initialization optionally with extra components
-    _ID_prob = None
-    if GT_prior is None or n_donor > GT_prior.shape[2]:
-        n_donor_run1 = int(n_donor + n_extra_donor)
-        print("[vireo] warm-up: %d random initializations for %d clusters..." 
-              %(n_init, n_donor_run1))
-
-        ID_prob_list = []
-        for i in range(n_init):
-            _ID_prob = np.random.rand(AD.shape[1], n_donor_run1)
-            ID_prob_list.append(tensor_normalize(_ID_prob, axis=1))
-
-        result = []
-        for _ID_prob in ID_prob_list:
-            result.append(vireo_core(AD, DP, n_donor=n_donor_run1,
-                GT_prior = None, ID_prob_init=_ID_prob, min_iter=5, max_iter=15, 
-                verbose=False, check_doublet=False, **kwargs))
-
-        LB_list = [x['LB_list'][-1] for x in result]
-        res1 = result[np.argmax(LB_list)]
-
-        _ID_prob = donor_select(res1['GT_prob'], res1['ID_prob'], n_donor, 
-                                mode=extra_donor_mode)
-
-        print("[vireo] warm-up: lower bound ranges [%.1f, %.1f, %.1f]" 
-              %(min(LB_list), np.median(LB_list), max(LB_list)))
-    else:
-        _ID_prob = None
-
-    ## pre-run: tune the genotype prior (if genotype prior is uncertain)
-    GT_prior_use = GT_prior
-    if GT_prior is not None and n_donor < GT_prior.shape[2]:
-        print("[vireo] pre-RUN: finding %d from %d donors with GT ..." 
-              %(n_donor, GT_prior.shape[2]))
-        res1 = vireo_core(AD, DP, GT_prior = GT_prior, n_donor=None, 
-                          ID_prob_init=_ID_prob, check_doublet=False, **kwargs)
-        _donor_cnt = np.sum(res1['ID_prob'], axis=0)
-        _donor_idx = np.argsort(_donor_cnt)[::-1]
-        GT_prior_use = GT_prior[:, :, _donor_idx[:n_donor]]
-
-        print("\t".join(["donor%d" %x for x in _donor_idx]))
-        print("\t".join(["%.0f" %_donor_cnt[x] for x in _donor_idx]))
-
-    elif GT_prior is not None and n_donor > GT_prior.shape[2]:
-        print("[vireo] pre-RUN: finding %d from %d donors without GT ..." 
-              %(n_donor - GT_prior.shape[2], n_donor))
-        res1 = vireo_core(AD, DP, GT_prior=None, n_donor=n_donor, 
-                          ID_prob_init=_ID_prob, check_doublet=check_doublet, 
-                          **kwargs)
-        GT_prior_use = res1['GT_prob']
-        idx = greed_match(GT_prior, GT_prior_use)
-        GT_prior_use[:, :, idx] = GT_prior
-        _idx_order = np.append(idx, np.delete(np.arange(n_donor), idx))
-        GT_prior_use = GT_prior_use[:, :, _idx_order]
-
-        _donor_cnt = np.sum(res1['ID_prob'], axis=0) 
-        idx_ordered = np.append(idx, np.delete(np.arange(n_donor), idx))
-        print("\t".join(["donor%d" %x for x in idx_ordered]))
-        print("\t".join(["%.0f" %_donor_cnt[x] for x in idx_ordered]))
-
-    ## main run
-    print("[vireo] main RUN with warm initials and tuned GT ...")
-    res1 = vireo_core(AD, DP, GT_prior=GT_prior_use, n_donor=n_donor, 
-                      ID_prob_init=_ID_prob, check_doublet=check_doublet, 
-                      **kwargs)
-    print("[vireo] main RUN: %d iterations; lower bound %.1f" 
-          %(len(res1['LB_list']), res1['LB_list'][-1]))
-
-    ## print the beta parameters
-    print("[vireo] beta parameters for binomial rate:")
-    np.set_printoptions(formatter={'float': lambda x: format(x, '.1f')})
-    print(res1['theta_shapes'])
-
-    return res1
-
+from scipy.stats import entropy
+from scipy.special import digamma
+from .vireo_base import normalize, loglik_amplify, beta_entropy
 
 def vireo_core(AD, DP, n_donor=None, GT_prior=None, learn_GT=True,
     theta_prior=None, learn_theta=True, ASE_mode=False, 
@@ -121,11 +24,11 @@ def vireo_core(AD, DP, n_donor=None, GT_prior=None, learn_GT=True,
         np.random.seed(random_seed)
 
     if n_donor is None:
-        if len(GT_prior.shape) < 3 or GT_prior.shape[2] < 2:
+        if len(GT_prior.shape) < 3 or GT_prior.shape[1] < 2:
             print("Error: no n_donor and GT_prior has < 2 donors.")
             sys.exit(1)
         else:
-            n_donor = GT_prior.shape[2]
+            n_donor = GT_prior.shape[1]
         
     n_var = AD.shape[0] # n_variants
     
@@ -145,13 +48,13 @@ def vireo_core(AD, DP, n_donor=None, GT_prior=None, learn_GT=True,
     else:
         Psi = Psi[:n_donor] / np.sum(Psi[:n_donor])
     if ID_prob_init is None:
-        ID_prob = tensor_normalize(np.random.rand(AD.shape[1], n_donor), axis=1)
+        ID_prob = normalize(np.random.rand(AD.shape[1], n_donor))
     else:
-        ID_prob = tensor_normalize(ID_prob_init.copy(), axis=1)
+        ID_prob = normalize(ID_prob_init.copy())
     
     ## initialize GT
     if GT_prior is None:
-        GT_prior = tensor_normalize(np.ones((n_var, n_gt, n_donor)), axis=1)
+        GT_prior = normalize(np.ones((n_var, n_donor, n_gt)))
         GT_prob, logLik_GT = get_GT_prob(AD, DP, ID_prob, 
                                          theta_shapes, GT_prior)
         if learn_GT is False:
@@ -161,24 +64,24 @@ def vireo_core(AD, DP, n_donor=None, GT_prior=None, learn_GT=True,
         GT_prob = GT_prior.copy()
         GT_prior[GT_prior < min_GP] = min_GP
         GT_prior[GT_prior > 1 - min_GP] = 1 - min_GP
-        GT_prior = tensor_normalize(GT_prior, axis=1)
+        GT_prior = normalize(GT_prior)
 
     #TODO: check if there is a better way to deal with GT imcompleteness
-    if GT_prior.shape[2] < n_donor:
-        _add_n = n_donor - GT_prior.shape[2]
+    if GT_prior.shape[1] < n_donor:
+        _add_n = n_donor - GT_prior.shape[1]
         GT_prior = np.append(GT_prior, 
-            tensor_normalize(np.ones((n_var, n_gt, _add_n)), axis=1), axis=2)
+            normalize(np.ones((n_var, n_gt, _add_n)), axis=1))
         GT_prob = GT_prior.copy()
         if learn_GT is False:
             print("As GT_prior is not complete, we change learn_GT to True.")
             learn_GT = True
-    elif GT_prior.shape[2] > n_donor:
+    elif GT_prior.shape[1] > n_donor:
         print("Warning: n_donor is smaller than samples in GT_prior, hence we "
               "ignore n_donor.")
-        n_donor = GT_prior.shape[2]
+        n_donor = GT_prior.shape[1]
 
     # check if n_gt is matched to GT_prior
-    if GT_prior.shape[1] != n_gt:
+    if GT_prior.shape[2] != n_gt:
         print("Error: number of GT categories not matched: theta and GT_prior")
         sys.exit(1)
 
@@ -235,7 +138,7 @@ def update_VB(AD, DP, GT_prob, theta_shapes, theta_prior, GT_prior,
     if check_doublet:
         GT_both = add_doublet_GT(GT_prob)
         theta_both = add_doublet_theta(theta_shapes)
-        n_doublet_pair = GT_both.shape[2] - GT_prob.shape[2]
+        n_doublet_pair = GT_both.shape[1] - GT_prob.shape[1]
         if doublet_prior is None:
             doublet_prior = min(0.5, AD.shape[1] / 100000)
             
@@ -248,7 +151,7 @@ def update_VB(AD, DP, GT_prob, theta_shapes, theta_prior, GT_prior,
         theta_both = theta_shapes.copy()
 
     ID_prob2, logLik_ID = get_ID_prob(AD, DP, GT_both, theta_both, Psi_both)
-    ID_prob = ID_prob2[:, :GT_prob.shape[2]]
+    ID_prob = ID_prob2[:, :GT_prob.shape[1]]
     
     if learn_GT:
         GT_prob, logLik_GT = get_GT_prob(AD, DP, ID_prob, 
@@ -262,6 +165,94 @@ def update_VB(AD, DP, GT_prob, theta_shapes, theta_prior, GT_prior,
                             theta_prior, GT_prior, Psi_both)
 
     return ID_prob2, GT_prob, theta_shapes, LB_val
+
+
+
+def get_theta_shapes(AD, DP, ID_prob, GT_prob, theta_prior):
+    """
+    """
+    S1_gt = AD * ID_prob
+    SS_gt = DP * ID_prob
+    S2_gt = SS_gt - S1_gt
+    
+    theta_shapes = theta_prior.copy()
+    for ig in range(theta_shapes.shape[0]):
+        _axis = 1 if len(theta_shapes.shape) == 3 else None
+        theta_shapes[ig, 0] += np.sum(S1_gt * GT_prob[:, :, ig], axis=_axis)
+        theta_shapes[ig, 1] += np.sum(S2_gt * GT_prob[:, :, ig], axis=_axis)
+    return theta_shapes
+
+def get_ID_prob(AD, DP, GT_prob, theta_shapes, Psi=None):
+    """
+    """
+    if Psi is None:
+        Psi = np.ones(GT_prob.shape[1]) / GT_prob.shape[1]
+
+    BD = DP - AD
+    logLik_ID = np.zeros((AD.shape[1], GT_prob.shape[1]))
+    for ig in range(GT_prob.shape[2]):
+        _digmma1 = digamma(theta_shapes[ig, 0]).reshape(-1, 1)
+        _digmma2 = digamma(theta_shapes[ig, 1]).reshape(-1, 1)
+        _digmmas = digamma(theta_shapes[ig, :].sum(axis=0)).reshape(-1, 1)
+        S1 = AD.transpose() * (GT_prob[:, :, ig] * _digmma1)
+        S2 = BD.transpose() * (GT_prob[:, :, ig] * _digmma2)
+        SS = DP.transpose() * (GT_prob[:, :, ig] * _digmmas)
+        logLik_ID += (S1 + S2 - SS)
+    
+    Psi_norm = np.log(Psi / np.sum(Psi))
+    ID_prob = np.exp(loglik_amplify(logLik_ID + Psi_norm, axis=1))
+    ID_prob = normalize(ID_prob, axis=1)
+    
+    return ID_prob, logLik_ID
+    
+
+def get_GT_prob(AD, DP, ID_prob, theta_shapes, GT_prior=None):
+    """
+    """
+    if GT_prior is None:
+        GT_prior = np.ones((AD.shape[0], ID_prob.shape[1], 
+                            theta_shapes.shape[0])) 
+        GT_prior = GT_prior / theta_shapes.shape[0]
+        
+    S1_gt = AD * ID_prob
+    SS_gt = DP * ID_prob
+    S2_gt = SS_gt - S1_gt
+    
+    logLik_GT = np.zeros(GT_prior.shape)
+    for ig in range(logLik_GT.shape[2]):        
+        _digmma1 = digamma(theta_shapes[ig, 0]).reshape(-1, 1)
+        _digmma2 = digamma(theta_shapes[ig, 1]).reshape(-1, 1)
+        _digmmas = digamma(theta_shapes[ig, :].sum(axis=0)).reshape(-1, 1)
+        logLik_GT[:, :, ig] = (S1_gt * _digmma1 + 
+                               S2_gt * _digmma2 - 
+                               SS_gt * _digmmas)
+        
+    # += np.log(GT_prior)
+    GT_prob = loglik_amplify(logLik_GT + np.log(GT_prior), axis=2)
+    GT_prob = normalize(np.exp(GT_prob), axis=2)
+    
+    return GT_prob, logLik_GT
+
+
+
+def VB_lower_bound(logLik_ID, GT_prob, ID_prob, theta_shapes, 
+    theta_prior, GT_prior=None, Psi=None):
+    """
+    """
+    if GT_prior is None:
+        GT_prior = normalize(np.ones(GT_prob.shape), axis=2)
+    if Psi is None:
+        ID_prior = np.ones(ID_prob.shape) / ID_prob.shape[1]
+    else:
+        ID_prior = np.ones(ID_prob.shape) * np.log(Psi / np.sum(Psi))
+        
+    LB_p = np.sum(logLik_ID * ID_prob)
+    KL_ID = -np.sum(entropy(ID_prob, ID_prior, axis=1))
+    KL_GT = -np.sum(entropy(GT_prob, GT_prior, axis=2))
+    KL_theta = -beta_entropy(theta_shapes, theta_prior)
+    
+    # print(LB_p, KL_ID, KL_GT, KL_theta)
+    return LB_p - KL_ID - KL_GT - KL_theta
 
 
 def add_doublet_theta(theta_shapes):
@@ -281,8 +272,8 @@ def add_doublet_theta(theta_shapes):
     _theta_p1 = theta_shapes[db_idx[:, 0]]
     _theta_p2 = theta_shapes[db_idx[:, 1]]
 
-    _theta_mean = (tensor_normalize(_theta_p1, axis=1) + 
-                   tensor_normalize(_theta_p2, axis=1)) / 2.0
+    _theta_mean = (normalize(_theta_p1, axis=1) + 
+                   normalize(_theta_p2, axis=1)) / 2.0
     _theta_sum  = np.sqrt(np.sum(_theta_p1, axis=1, keepdims=True) * 
                           np.sum(_theta_p2, axis=1, keepdims=True))
     
@@ -297,91 +288,29 @@ def add_doublet_GT(GT_prob):
     New GT has five categories: 0, 1, 2, 1.5, 2.5
     TODO: New GT has six categories: 0, 1, 2, 0_1, 0_2, 1_2
     """
-    combn_iter = itertools.combinations(range(GT_prob.shape[1]), 2)
+    combn_iter = itertools.combinations(range(GT_prob.shape[2]), 2)
     gt_idx = np.array([x for x in combn_iter]) # GT combination
     g_idx1 = gt_idx[:, 0]
     g_idx2 = gt_idx[:, 1]
 
-    combn_iter = itertools.combinations(range(GT_prob.shape[2]), 2)
+    combn_iter = itertools.combinations(range(GT_prob.shape[1]), 2)
     sp_idx = np.array([x for x in combn_iter]) # sample combination
     s_idx1 = sp_idx[:, 0]
     s_idx2 = sp_idx[:, 1]
     
     ## GT_prob has three genotypes: 0, 1, 2;
-    n_gt = GT_prob.shape[1]
-    GT_prob2 = np.zeros((GT_prob.shape[0], n_gt + gt_idx.shape[0], 
-                         sp_idx.shape[0]))
+    n_gt = GT_prob.shape[2]
+    GT_prob2 = np.zeros((GT_prob.shape[0], sp_idx.shape[0],
+                         n_gt + gt_idx.shape[0]))
 
-    GT_prob2[:, :n_gt, :] = (GT_prob[:, :, s_idx1] * 
-                             GT_prob[:, :, s_idx2])
-    GT_prob2[:, n_gt:, :] = (GT_prob[:, :, s_idx1][:, g_idx1, :] * 
-                             GT_prob[:, :, s_idx2][:, g_idx2, :] +
-                             GT_prob[:, :, s_idx1][:, g_idx2, :] * 
-                             GT_prob[:, :, s_idx2][:, g_idx1, :])
+    GT_prob2[:, :, :n_gt] = (GT_prob[:, s_idx1, :] * 
+                             GT_prob[:, s_idx2, :])
+    GT_prob2[:, :, n_gt:] = (GT_prob[:, s_idx1, :][:, :, g_idx1] * 
+                             GT_prob[:, s_idx2, :][:, :, g_idx2] +
+                             GT_prob[:, s_idx1, :][:, :, g_idx2] * 
+                             GT_prob[:, s_idx2, :][:, :, g_idx1])
     
-    GT_prob2 = tensor_normalize(GT_prob2, axis=1)
-    GT_prob1 = np.append(GT_prob, np.zeros((GT_prob.shape[0], gt_idx.shape[0], 
-                                            GT_prob.shape[2])), axis=1)
-    return np.append(GT_prob1, GT_prob2, axis=2)
-    
-
-def greed_match(X, Z, axis=2):
-    """
-    Match Z to X by minimize the difference, 
-    hence Z[:, :, axis] is best aligned to X
-    """
-    diff_mat = np.zeros((X.shape[axis], Z.shape[axis]))
-    for i in range(X.shape[axis]):
-        for j in range(Z.shape[axis]):
-            diff_mat[i, j] = np.mean(np.abs(X[:, :, i] - Z[:, :, j]))
-            
-    diff_copy = diff_mat.copy()
-    idx_out = -1 * np.ones(X.shape[axis], int)
-    while (-1 in idx_out):
-        idx_i = np.argmin(diff_copy) // diff_copy.shape[1]
-        idx_j = np.argmin(diff_copy) % diff_copy.shape[1]
-        idx_out[idx_i] = idx_j
-        # print(idx_i, idx_j, idx_out)
-
-        diff_copy[idx_i, :] = np.max(diff_mat) + 1
-        diff_copy[:, idx_j] = np.max(diff_mat) + 1
-        
-    return idx_out
-
-
-def donor_select(GT_prob, ID_prob, n_donor, mode="distance"):
-    """
-    Select the donors from a set with extra donors.
-
-    The GT_prior can have different number of donors from n_donor.
-    
-    mode="size": only keep the n_donor with largest number of cells
-    mode="distance": only keep the n_donor with most different GT from each other
-    """
-    _donor_cnt = np.sum(ID_prob, axis=0)
-    if mode == "size":
-        _donor_idx = np.argsort(_donor_cnt)[::-1]
-    else:
-        _GT_diff = np.zeros((GT_prob.shape[2], GT_prob.shape[2]))
-        for i in range(GT_prob.shape[2]):
-            for j in range(GT_prob.shape[2]):
-                _GT_diff[i, j] = np.mean(np.abs(GT_prob[:, :, i] - 
-                                                GT_prob[:, :, j]))
-
-        _donor_idx = [np.argmax(_donor_cnt)]
-        _donor_left = np.delete(np.arange(GT_prob.shape[2]), _donor_idx)
-        _GT_diff = np.delete(_GT_diff, _donor_idx, axis=1)
-        while len(_donor_idx) < _GT_diff.shape[0]:
-            # _idx = np.argmax(np.sum(_GT_diff[_donor_idx, :], axis=0))
-            _idx = np.argmax(np.min(_GT_diff[_donor_idx, :], axis=0))
-            _donor_idx.append(_donor_left[_idx])
-            _donor_left = np.delete(_donor_left, _idx)
-            _GT_diff = np.delete(_GT_diff, _idx, axis=1)
-
-    print("\t".join(["donor%d" %x for x in _donor_idx]))
-    print("\t".join(["%.0f" %_donor_cnt[x] for x in _donor_idx]))
-
-    ID_prob_out = ID_prob[:, _donor_idx[:n_donor]]
-    ID_prob_out[ID_prob_out < 10**-10] = 10**-10
-
-    return ID_prob_out
+    GT_prob2 = normalize(GT_prob2, axis=2)
+    GT_prob1 = np.append(GT_prob, 
+        np.zeros((GT_prob.shape[0], GT_prob.shape[1], gt_idx.shape[0])), axis=2)
+    return np.append(GT_prob1, GT_prob2, axis=1)

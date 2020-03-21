@@ -178,7 +178,7 @@ def GenoINFO_maker(GT_prob, AD_reads, DP_reads):
     Generate the Genotype information for estimated genotype probability at
     sample level.
     """
-    GT_val = np.argmax(GT_prob, axis=1)
+    GT_val = np.argmax(GT_prob, axis=2)
     GT_prob[GT_prob < 10**(-10)] = 10**(-10)
     PL_prob = np.round(-10 * np.log10(GT_prob)).astype(int).astype(str)
     AD_reads = np.round(AD_reads).astype(int).astype(str)
@@ -187,7 +187,7 @@ def GenoINFO_maker(GT_prob, AD_reads, DP_reads):
     GT, PL, AD, DP = [], [], [], []
     for i in range(GT_prob.shape[0]):
         GT.append([['0/0', '1/0', '1/1'][x] for x in GT_val[i, :]])
-        PL.append([",".join(list(x)) for x in PL_prob[i, :, :].transpose()])
+        PL.append([",".join(list(x)) for x in PL_prob[i, :, :]])
         AD.append(list(AD_reads[i, :]))
         DP.append(list(DP_reads[i, :]))
     
@@ -260,9 +260,9 @@ def parse_donor_GPb(GT_dat, tag='GT', min_prob=0.0):
         print("[parse_donor_GPb] Error: no support tag: %s" %tag)
         return None
 
-    GT_prob = np.zeros((len(GT_dat), 3, len(GT_dat[0])))
+    GT_prob = np.zeros((len(GT_dat), len(GT_dat[0]), 3))
     for i in range(GT_prob.shape[0]):
-        for j in range(GT_prob.shape[2]):
-            GT_prob[i, :, j] = parse_GT_code(GT_dat[i][j], tag,
+        for j in range(GT_prob.shape[1]):
+            GT_prob[i, j, :] = parse_GT_code(GT_dat[i][j], tag,
                                              min_prob)
     return GT_prob

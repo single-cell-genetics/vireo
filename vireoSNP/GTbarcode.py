@@ -9,7 +9,7 @@ from optparse import OptionParser, OptionGroup
 
 from .version import __version__
 from .plot.base_plot import minicode_plot
-from .utils.vireo_base import variant_select
+from .utils.variant_select import variant_select
 from .utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
 
 
@@ -70,7 +70,7 @@ def main():
     donor_GPb = parse_donor_GPb(donor_vcf['GenoINFO'][geno_tag], geno_tag)
 
     var_ids = np.array(donor_vcf["variants"])
-    GT_vals = np.argmax(donor_GPb, axis = 1)
+    GT_vals = np.argmax(donor_GPb, axis = 2)
     sample_ids = donor_vcf['samples']
 
     INFO = donor_vcf["FixedINFO"]["INFO"]

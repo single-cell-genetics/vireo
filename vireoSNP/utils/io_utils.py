@@ -1,7 +1,61 @@
 
 import subprocess
 import numpy as np
+from scipy.io import mmread
 from itertools import permutations
+
+from .vcf_utils import load_VCF, write_VCF, parse_donor_GPb
+from .vcf_utils import read_sparse_GeneINFO, GenoINFO_maker
+
+
+def read_cellSNP(dir_name):
+    """Read data from the cellSNP output directory
+
+    Parameters
+    ----------
+    dir_name:
+        directory full path name for cellSNP output
+    
+    Return
+    ------
+    A disctionary containing AD, DP, cells and variants
+    """
+    cell_dat = load_VCF(dir_name + "/cellSNP.base.vcf.gz", load_sample=False,
+                        biallelic_only=False)
+    cell_dat['AD'] = mmread(dir_name + "/cellSNP.tag.AD.mtx").tocsc()
+    cell_dat['DP'] = mmread(dir_name + "/cellSNP.tag.DP.mtx").tocsc()
+    cell_dat['samples'] = np.genfromtxt(dir_name + "/cellSNP.samples.tsv", dtype=str)
+    return cell_dat
+
+
+def read_vartrix(alt_mtx, ref_mtx, cell_file, vcf_file=None):
+    """Read data from VarTrix
+
+    Parameters
+    ----------
+    alt_mtx:
+        sparse matrix file for alternative alleles
+    ref_mtx:
+        sparse matrix file for reference alleles
+    cell_file:
+        file for cell barcodes, each per line
+    vcf_file:
+        the vcf file used for fetch variants in VarTrix
+    
+    Return
+    ------
+    A disctionary containing AD, DP, cells and optionally variants
+    """
+    if vcf_file is not None:
+        cell_dat = load_VCF(vcf_file, load_sample=False, biallelic_only=False)
+        cell_dat['variants'] = np.array(cell_vcf['variants'])
+    else:
+        cell_dat = {}
+    cell_dat['AD'] = mmread(alt_mtx).tocsc()
+    cell_dat['DP'] = mmread(ref_mtx).tocsc() + cell_dat['AD']
+    cell_dat['samples'] = np.genfromtxt(cell_file, dtype=str)
+    return cell_dat
+
 
 def write_donor_id(out_dir, donor_names, cell_names, n_vars, res_vireo):
     """
