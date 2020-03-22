@@ -12,8 +12,8 @@ from scipy.io import mmread
 from optparse import OptionParser, OptionGroup
 
 from .version import __version__
-from .utils.vireo_base import match
-from .utils.vireo_wrap import vireo_flock, greed_match
+from .utils.vireo_base import match, greed_match
+from .utils.vireo_wrap import vireo_flock
 
 from .plot.base_plot import plot_GT
 from .utils.io_utils import write_donor_id, read_cellSNP, read_vartrix
@@ -112,18 +112,15 @@ def main():
 
         cell_dat = read_vartrix(vartrix_files[0], vartrix_files[1], 
                                 vartrix_files[2], vartrix_files[3])
-        print("[vireo] Loading vartrix files, done.")
     elif os.path.isdir(os.path.abspath(options.cell_data)):
         print("[vireo] Loading cell folder ...")
         cell_dat = read_cellSNP(options.cell_data)
-        print("[vireo] Loading cell foder, done.")
     else:
         print("[vireo] Loading cell VCF file ...")
         cell_vcf = load_VCF(options.cell_data, biallelic_only=True)
         cell_dat = read_sparse_GeneINFO(cell_vcf['GenoINFO'], keys=['AD', 'DP'])
         for _key in ['samples', 'variants', 'FixedINFO', 'contigs', 'comments']:
             cell_dat[_key] = cell_vcf[_key]
-        print("[vireo] Loading cell VCF file, done.")
 
     ## input donor genotype
     n_donor = options.n_donor
@@ -162,13 +159,12 @@ def main():
         for _key in cell_dat["FixedINFO"].keys():
             cell_dat["FixedINFO"][_key] = [
                 cell_dat["FixedINFO"][_key][x] for x in idx1]
-        print("[vireo] Loading donor VCF file, done.")
 
-        if n_donor is None or n_donor == donor_GPb.shape[2]:
-            n_donor = donor_GPb.shape[2]
+        if n_donor is None or n_donor == donor_GPb.shape[1]:
+            n_donor = donor_GPb.shape[1]
             donor_names = donor_vcf['samples']
             learn_GT = False
-        elif n_donor < donor_GPb.shape[2]:
+        elif n_donor < donor_GPb.shape[1]:
             learn_GT = False
             donor_names = ['donor%d' %x for x in range(n_donor)]
         else:
@@ -235,6 +231,7 @@ def main():
     run_time = time.time() - START_TIME
     print("[vireo] All done: %d min %.1f sec" %(int(run_time / 60), 
                                                     run_time % 60))
+    print()
     
         
 if __name__ == "__main__":

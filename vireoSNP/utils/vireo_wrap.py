@@ -1,5 +1,5 @@
 import numpy as np
-from .vireo_base import normalize
+from .vireo_base import normalize, greed_match, donor_select
 from .vireo_model import vireo_core
 
 
@@ -95,65 +95,3 @@ def vireo_flock(AD, DP, GT_prior=None, n_donor=None, n_extra_donor=2,
     print(res1['theta_shapes'])
 
     return res1
-
-
-def greed_match(X, Z, axis=1):
-    """
-    Match Z to X by minimize the difference, 
-    hence Z[:, axis] is best aligned to X
-    """
-    diff_mat = np.zeros((X.shape[axis], Z.shape[axis]))
-    for i in range(X.shape[axis]):
-        for j in range(Z.shape[axis]):
-            diff_mat[i, j] = np.mean(np.abs(X[:, i] - Z[:, j]))
-            
-    diff_copy = diff_mat.copy()
-    idx_out = -1 * np.ones(X.shape[axis], int)
-    while (-1 in idx_out):
-        idx_i = np.argmin(diff_copy) // diff_copy.shape[1]
-        idx_j = np.argmin(diff_copy) % diff_copy.shape[1]
-        idx_out[idx_i] = idx_j
-        # print(idx_i, idx_j, idx_out)
-
-        diff_copy[idx_i, :] = np.max(diff_mat) + 1
-        diff_copy[:, idx_j] = np.max(diff_mat) + 1
-        
-    return idx_out
-
-
-def donor_select(GT_prob, ID_prob, n_donor, mode="distance"):
-    """
-    Select the donors from a set with extra donors.
-
-    The GT_prior can have different number of donors from n_donor.
-    
-    mode="size": only keep the n_donor with largest number of cells
-    mode="distance": only keep the n_donor with most different GT from each other
-    """
-    _donor_cnt = np.sum(ID_prob, axis=0)
-    if mode == "size":
-        _donor_idx = np.argsort(_donor_cnt)[::-1]
-    else:
-        _GT_diff = np.zeros((GT_prob.shape[1], GT_prob.shape[1]))
-        for i in range(GT_prob.shape[2]):
-            for j in range(GT_prob.shape[2]):
-                _GT_diff[i, j] = np.mean(np.abs(GT_prob[:, i, :] - 
-                                                GT_prob[:, j, :]))
-
-        _donor_idx = [np.argmax(_donor_cnt)]
-        _donor_left = np.delete(np.arange(GT_prob.shape[1]), _donor_idx)
-        _GT_diff = np.delete(_GT_diff, _donor_idx, axis=1)
-        while len(_donor_idx) < _GT_diff.shape[0]:
-            # _idx = np.argmax(np.sum(_GT_diff[_donor_idx, :], axis=0))
-            _idx = np.argmax(np.min(_GT_diff[_donor_idx, :], axis=0))
-            _donor_idx.append(_donor_left[_idx])
-            _donor_left = np.delete(_donor_left, _idx)
-            _GT_diff = np.delete(_GT_diff, _idx, axis=1)
-
-    print("\t".join(["donor%d" %x for x in _donor_idx]))
-    print("\t".join(["%.0f" %_donor_cnt[x] for x in _donor_idx]))
-
-    ID_prob_out = ID_prob[:, _donor_idx[:n_donor]]
-    ID_prob_out[ID_prob_out < 10**-10] = 10**-10
-
-    return ID_prob_out

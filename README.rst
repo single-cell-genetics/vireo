@@ -26,13 +26,11 @@ while the Python package name is vireoSNP_ to aviod name confilict on PyPI.
 
 News
 ====
-All release notes can be found in doc/release.rst_.
+* All release notes can be found in doc/release.rst_.
+* vireoSNP_usage.ipynb_ for using vireoSNP on donor deconvolution and general 
+  cell clustering by modelling allelic ratios
 
 .. _release.rst: https://github.com/single-cell-genetics/vireo/blob/master/doc/release.rst
-
-Usage of vireoSNP Python module for donor deconvolution and general cell 
-clustering based on allelic ratio: vireoSNP_usage.ipynb_
-
 .. _vireoSNP_usage.ipynb: https://github.com/single-cell-genetics/vireo/blob/master/examples/vireoSNP_usage.ipynb
 
 

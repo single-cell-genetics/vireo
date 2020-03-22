@@ -90,6 +90,7 @@ def write_donor_id(out_dir, donor_names, cell_names, n_vars, res_vireo):
     for i in range(len(donor_ids_uniq)):
         fid.writelines("%s\t%d\n" %(donor_ids_uniq[i], donor_ids_count[i]))
     fid.close()
+    print("[vireo] final donor size:")
     print("\t".join([str(x) for x in donor_ids_uniq]))
     print("\t".join([str(x) for x in donor_ids_count]))
 
