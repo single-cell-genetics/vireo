@@ -177,8 +177,8 @@ def donor_select(GT_prob, ID_prob, n_donor, mode="distance"):
         _donor_idx = np.argsort(_donor_cnt)[::-1]
     else:
         _GT_diff = np.zeros((GT_prob.shape[1], GT_prob.shape[1]))
-        for i in range(GT_prob.shape[2]):
-            for j in range(GT_prob.shape[2]):
+        for i in range(GT_prob.shape[1]):
+            for j in range(GT_prob.shape[1]):
                 _GT_diff[i, j] = np.mean(np.abs(GT_prob[:, i, :] - 
                                                 GT_prob[:, j, :]))
 
@@ -192,6 +192,8 @@ def donor_select(GT_prob, ID_prob, n_donor, mode="distance"):
             _donor_left = np.delete(_donor_left, _idx)
             _GT_diff = np.delete(_GT_diff, _idx, axis=1)
 
+    print("[vireo] donor size with searching extra %d donors:" 
+              %(GT_prob.shape[1] - n_donor))
     print("\t".join(["donor%d" %x for x in _donor_idx]))
     print("\t".join(["%.0f" %_donor_cnt[x] for x in _donor_idx]))
 
