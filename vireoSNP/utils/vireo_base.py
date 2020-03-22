@@ -177,8 +177,8 @@ def donor_select(GT_prob, ID_prob, n_donor, mode="distance"):
         _donor_idx = np.argsort(_donor_cnt)[::-1]
     else:
         _GT_diff = np.zeros((GT_prob.shape[1], GT_prob.shape[1]))
-        for i in range(GT_prob.shape[2]):
-            for j in range(GT_prob.shape[2]):
+        for i in range(GT_prob.shape[1]):
+            for j in range(GT_prob.shape[1]):
                 _GT_diff[i, j] = np.mean(np.abs(GT_prob[:, i, :] - 
                                                 GT_prob[:, j, :]))
 
