@@ -28,8 +28,9 @@ mitochondral mutations.
 
 Tutorials
 =========
-* `vireoSNP_donors.ipynb`_ giving example on donor deconvolution manually
-* `vireoSNP_clones.ipynb`_ giving example clone reconstruction on mitochondral 
+**donors**: `vireoSNP_donors.ipynb`_ gives example on donor deconvolution manually
+
+**clones**: `vireoSNP_clones.ipynb`_ gives example clone reconstruction on mitochondral 
   mutations
 
 .. _vireoSNP_donors.ipynb: https://github.com/single-cell-genetics/vireo/blob/master/examples/vireoSNP_donors.ipynb
