@@ -13,8 +13,8 @@ Once the genotypes for each cell have been obtained, e.g., in VCF format, or two
 sparse matrices ``AD`` and ``DP``, we can apply Vireo for demultiplexing.
 
 
-Demultiplexing single cells
-===========================
+Demultiplexing for donors
+=========================
 
 By default, Vireo works without any known genotype information for pooled 
 samples. However, if any of genotype of these samples are known or can be 
@@ -59,12 +59,15 @@ to demultiplex scRNA-seq data.
 
       vireo -c $CELL_DATA -d $DONOR_GT_FILE -o $OUT_DIR --forceLearnGT
 
+
+Formats of cell data
+--------------------
 Viroe supports the cell data in three formats:
 
-* a cellSNP output folder containing VCF for variants info and sparse matrices 
-  ``AD`` and ``DP`` (recommended)
-* standard VCF file with variants by cells
-* Vartrix outputs with three files: alt.mtx,ref.mtx,barcodes.tsv
+1) a cellSNP output folder containing VCF for variants info and sparse matrices 
+   ``AD`` and ``DP``
+2) Vartrix outputs with three or four files: alt.mtx,ref.mtx,barcodes.tsv[,SNP.vcf.gz]
+3) standard VCF file with variants by cells
 
 
 Vireo full arguments
@@ -77,45 +80,46 @@ Type ``vireo -h`` for details of all arguments:
    Usage: vireo [options]
 
    Options:
-      -h, --help            show this help message and exit
-      -c CELL_DATA, --cellData=CELL_DATA
-                              The cell genotype file in VCF format or cellSNP folder
-                              with sparse matrices.
-      -N N_DONOR, --nDonor=N_DONOR
-                              Number of donors to demultiplex; can be larger than
-                              provided in donor_file
-      -o OUT_DIR, --outDir=OUT_DIR
-                              Dirtectory for output files [default:
-                              $cellFilePath/vireo]
+   -h, --help            show this help message and exit
+   -c CELL_DATA, --cellData=CELL_DATA
+                           The cell genotype file in VCF format or cellSNP folder
+                           with sparse matrices.
+   -N N_DONOR, --nDonor=N_DONOR
+                           Number of donors to demultiplex; can be larger than
+                           provided in donor_file
+   -o OUT_DIR, --outDir=OUT_DIR
+                           Dirtectory for output files [default:
+                           $cellFilePath/vireo]
 
    Optional input files:
       --vartrixData=VARTRIX_DATA
-                              The cell genotype files in vartrix outputs (three
-                              files, comma separated): alt.mtx,ref.mtx,barcodes.tsv.
-                              This will suppress cellData argument.
+                           The cell genotype files in vartrix outputs (three/four
+                           files, comma separated):
+                           alt.mtx,ref.mtx,barcodes.tsv,SNPs.vcf.gz. This will
+                           suppress cellData argument.
       -d DONOR_FILE, --donorFile=DONOR_FILE
-                              The donor genotype file in VCF format. Please filter
-                              the sample and region with bcftools -s and -R first!
+                           The donor genotype file in VCF format. Please filter
+                           the sample and region with bcftools -s and -R first!
       -t GENO_TAG, --genoTag=GENO_TAG
-                              The tag for donor genotype: GT, GP, PL [default: PL]
+                           The tag for donor genotype: GT, GP, PL [default: PL]
 
    Optional arguments:
       --noDoublet         If use, not checking doublets.
       -M N_INIT, --nInit=N_INIT
-                              Number of random initializations, when GT needs to
-                              learn [default: 50]
+                           Number of random initializations, when GT needs to
+                           learn [default: 50]
       --extraDonor=N_EXTRA_DONOR
-                              Number of extra donor in pre-cluster, when GT needs to
-                              learn [default: 0]
+                           Number of extra donor in pre-cluster, when GT needs to
+                           learn [default: 0]
       --extraDonorMode=EXTRA_DONOR_MODE
-                              Method for searching from extra donors. size: n_cell
-                              per donor; distance: GT distance between donors
-                              [default: distance]
+                           Method for searching from extra donors. size: n_cell
+                           per donor; distance: GT distance between donors
+                           [default: distance]
       --forceLearnGT      If use, treat donor GT as prior only.
       --ASEmode           If use, turn on SNP specific allelic ratio.
       --noPlot            If use, turn off plotting GT distance.
       --randSeed=RAND_SEED
-                              Seed for random initialization [default: none]
+                           Seed for random initialization [default: none]
 
 
 
@@ -149,16 +153,6 @@ will also generate a figure for the identified genotype barcode, as following
    :scale: 50 %
    :alt: identified discriminatory variants
    :align: center
-
-
-vireoSNP module usage
-=====================
-Besides the command line usage for designed donor deconvolution, we also provide 
-tutorials on the usage of vireoSNP as a standard Python module for both donor 
-deconvolution and general cell clustering based on allelic ratio: 
-vireoSNP_usage.ipynb_
-
-.. _vireoSNP_usage.ipynb: https://github.com/single-cell-genetics/vireo/blob/master/examples/vireoSNP_usage.ipynb
 
 
 Example data

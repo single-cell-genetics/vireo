@@ -2,6 +2,15 @@
 History
 =======
 
+Release v0.3.0 (23/03/2020)
+===========================
+* Rewrite the Vireo in the object-oriented way for easier upgrading and adding 
+  new features
+* Now support fix the dispersion of the theta posterior distribution
+* Change `delay_fit_theta` as an augument. It's often useful for donor
+  deconvolution, but may not ideal for clonal inference, where theta can be very 
+  different from our expectation due to ASE or copy numbers
+
 Release v0.2.3 (22/03/2020)
 ===========================
 * Fix a minor bug in donor_select()

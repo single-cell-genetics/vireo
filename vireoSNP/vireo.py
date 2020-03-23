@@ -13,7 +13,7 @@ from optparse import OptionParser, OptionGroup
 
 from .version import __version__
 from .utils.vireo_base import match, greed_match
-from .utils.vireo_wrap import vireo_flock
+from .utils.vireo_wrap import vireo_wrap
 
 from .plot.base_plot import plot_GT
 from .utils.io_utils import write_donor_id, read_cellSNP, read_vartrix
@@ -197,7 +197,7 @@ def main():
     ## run vireo model (try multiple initializations)
     print("[vireo] Demultiplex %d cells to %d donors with %d variants." %(
         cell_dat['AD'].shape[1], n_donor, cell_dat['AD'].shape[0]))
-    res_vireo = vireo_flock(cell_dat['AD'], cell_dat['DP'], n_donor=n_donor, 
+    res_vireo = vireo_wrap(cell_dat['AD'], cell_dat['DP'], n_donor=n_donor, 
         GT_prior=donor_GPb, learn_GT=learn_GT, n_init=n_init, 
         n_extra_donor=n_extra_donor, extra_donor_mode=options.extra_donor_mode,
         check_doublet=check_doublet, random_seed=options.rand_seed,
