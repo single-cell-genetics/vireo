@@ -135,8 +135,9 @@ html_theme_options = {
         ("Install", "install"),
         ("Manual", "manual"),
         ("Genotyping", "genotype"),
+        ("API", "API"),
         ("Release", "release")
-        # ("API", "manual"),
+        # ("Tutorials", "tutorials"),
         # ("Link", "http://example.com", True),
     ],
 

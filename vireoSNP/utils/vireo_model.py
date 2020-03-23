@@ -4,11 +4,26 @@ from scipy.stats import entropy
 from scipy.special import logsumexp, digamma, betaln
 from .vireo_base import normalize, loglik_amplify, beta_entropy, get_binom_coeff
 
+__docformat__ = "restructuredtext en"
+
+__all__ = ['Vireo', 'add_doublet_theta', 'add_doublet_GT']
+
 
 class Vireo():
     """Viroe model: Variational Inference for reconstruction of ensemble origin
 
     The prior can be set via set_prior() before fitting the model.
+
+    Key properties
+    --------------
+    beta_mu: numpy array (1, n_GT) or (n_var, n_GT)
+        Beta mean parameter of theta's posterior
+    beta_sum: numpy array (1, n_GT) or (n_var, n_GT), same as beta_mu
+        Beta concetration parameter of theta's posterior
+    ID_prob: numpy array (n_cell, n_donor)
+        Posterior cell assignment probability to each donor
+    GT_prob: numpy array (n_var, n_donor, n_GT)
+        Posterior genotype probability per variant per donor
     """
     def __init__(self, n_cell, n_var, n_donor, n_GT=3, learn_GT=True,  
         learn_theta=True, ASE_mode=False, fix_beta_sum=False, 
@@ -16,8 +31,33 @@ class Vireo():
         GT_prob_init=None):
         """Initialise Vireo model
 
-        Note, multiple initialization is highly recomended to avoid local 
+        Note, multiple initializations are highly recomended to avoid local 
         optima.
+        
+        Parameters
+        ----------
+        n_cell : int. 
+            Number of cells
+        n_var : int. 
+            Number of variants
+        n_donor : int. 
+            Number of donors
+        n_GT : int. 
+            Number of genotype categories
+        learn_GT: bool. 
+            Whether updating `GT_prob`; otherwise using the initial
+        ASE_mode: bool. 
+            Whether setting allelic ratio `theta` to be variant specific
+        fix_beta_sum: bool. 
+            Whether fixing the concetration parameter of theta's posterior
+        beta_mu_init: numpy array (1, n_GT) or (n_var, n_GT)
+            Initial value of beta_mu, the mean parameter of theta
+        beta_sum_init: numpy array (1, n_GT) or (n_var, n_GT), same as beta_mu
+            Initial value of beta_sum, the concetration parameter of theta
+        ID_prob_init: numpy array (n_cell, n_donor)
+            Initial value of ID_prob, cell assignment probability to each donor
+        GT_prob_init: numpy array (n_var, n_donor, n_GT)
+            Initial value of GT_prob, genotype probability per variant and donor
         """
         self.n_GT = n_GT
         self.n_var = n_var
@@ -57,7 +97,10 @@ class Vireo():
     
     def set_prior(self, GT_prior=None, ID_prior=None, beta_mu_prior=None, 
         beta_sum_prior=None, min_GP=0.00001):
-        """Set prior for key variables: theta, G and Z
+        """Set prior for key variables: theta, GT_prob and ID_prob.
+        The priors are in the same shape as its according variables.
+
+        min_GP: float. Minimun genotype probability in GT_prior.
         """
         if beta_mu_prior is None:
             beta_mu_prior = np.expand_dims(
@@ -86,22 +129,27 @@ class Vireo():
 
     @property
     def theta_s1(self):
+        """Beta concetration1 parameter for theta posterior"""
         return self.beta_mu * self.beta_sum
 
     @property
     def theta_s2(self):
+        """Beta concetration2 parameter for theta posterior"""
         return (1 - self.beta_mu) * self.beta_sum
 
     @property 
     def digamma1_(self):
+        """Digamma of Beta concetration1 parameter"""
         return np.expand_dims(digamma(self.theta_s1), 1)
 
     @property 
     def digamma2_(self):
+        """Digamma of Beta concetration2 parameter"""
         return np.expand_dims(digamma(self.theta_s2), 1)
 
     @property 
     def digammas_(self):
+        """Digamma of Beta concetration summary parameter"""
         return np.expand_dims(digamma(self.theta_s1 + self.theta_s2), 1)
 
 
@@ -164,6 +212,8 @@ class Vireo():
         
     def get_ELBO(self, logLik_ID, AD=None, DP=None):
         """Calculating variational evidence lower bound with current parameters
+
+        logLik_ID: numpy array (n_cell, n_donor), the output from update_ID_prob
         """
         if logLik_ID is None:
             BD = DP - AD
@@ -192,6 +242,24 @@ class Vireo():
     def fit(self, AD, DP, max_iter=200, min_iter=5, epsilon_conv=1e-2,
         delay_fit_theta=0, verbose=False):
         """Fit Vireo model with coordinate ascent
+
+        Parameters
+        ----------
+        AD : scipy.sparse.csc_matrix (n_var, n_cell)
+            Sparse count matrix for alternative allele
+        DP : scipy.sparse.csc_matrix (n_var, n_cell)
+            Sparse count matrix for depths, alternative + refeerence alleles
+        max_iter : int
+            Maximum number of iterations
+        min_iter :
+            Minimum number of iterations
+        epsilon_conv : float
+            Threshold for detecting convergence
+        delay_fit_theta : int
+            Number of steps to delay updating theta. This can be very useful 
+            for common genetics when there is good prior on allelic ratio.
+        verbose : bool
+            Whether print out log info
         """
         _binom_coeff = np.sum(get_binom_coeff(AD, DP))
         ELBO = np.zeros(max_iter)
@@ -219,6 +287,28 @@ class Vireo():
     def predict_doublet(self, AD, DP, update_GT=True, update_ID=True, 
         doublet_rate_prior=None):
         """Predict doublet with fitted Vireo model
+
+        Parameters
+        ----------
+        AD : scipy.sparse.csc_matrix (n_var, n_cell)
+            Sparse count matrix for alternative allele
+        DP : scipy.sparse.csc_matrix (n_var, n_cell)
+            Sparse count matrix for depths, alternative + refeerence alleles
+        update_GT : bool
+            Whether updating GT_prob after removing doublet_prob
+        update_GT : bool
+            Whether updating ID_prob by removing doublet_prob
+        doublet_rate_prior : float
+            Prior value of doublet rate
+
+        Returns
+        -------
+        A tuple of two numpy arrays (doublet_prob, ID_prob)
+
+        doublet_prob : numpy array (n_cell, n_donor * (n_donor - 1) / 2)
+            Assignment probability of a cells to any doublet (donor pair)
+        ID_prob : numpy array (n_cell, n_donor)
+            updated ID_prob by removing doublet_prob
         """
         GT_both = add_doublet_GT(self.GT_prob)
         beta_mu_both, beta_sum_both = add_doublet_theta(self.beta_mu, 
@@ -261,7 +351,9 @@ class Vireo():
 
 
     def predit_ambient(self):
-        """
+        """Predict fraction of ambient RNA contaimination.
+        
+        Not implemented yet.
         """
         print("Not implemented yet.")
 
