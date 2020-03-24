@@ -12,7 +12,7 @@ from scipy.io import mmread
 from optparse import OptionParser, OptionGroup
 
 from .version import __version__
-from .utils.vireo_base import match, greed_match
+from .utils.vireo_base import match, optimal_match
 from .utils.vireo_wrap import vireo_wrap
 
 from .plot.base_plot import plot_GT
@@ -205,7 +205,7 @@ def main():
 
     if (n_donor is not None and 
         donor_GPb is not None and n_donor < donor_GPb.shape[2]):
-        idx = greed_match(res_vireo['GT_prob'], donor_GPb)
+        idx = optimal_match(res_vireo['GT_prob'], donor_GPb)[1]
         donor_names = [donor_vcf['samples'][x] for x in idx]
 
     ## save donor id for each cell

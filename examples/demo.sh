@@ -13,7 +13,7 @@ mkdir data/outs/
 ## MODE 1: no donor genotype
 OUT_DIR=data/outs/cellSNP_noGT
 vireo -c $CELL_DIR -N 4 -o $OUT_DIR --randSeed 2 #--ASEmode # --extraDonor 0
-
+# vireo -c $CELL_DIR -N 4 -o $OUT_DIR --randSeed 2 --extraDonor 1 #--ASEmode
 
 ## MODE 2: given donor genotype
 OUT_DIR=data/outs/cellSNP_PL

@@ -30,10 +30,13 @@ News
 * vireoSNP_donors.ipynb_ giving example on donor deconvolution manually
 * vireoSNP_clones.ipynb_ giving example clone reconstruction on mitochondral 
   mutations
+* donor_match.ipynb_ gives example on aligning donors to other omics data or 
+  other batches
 
 .. _release.rst: https://github.com/single-cell-genetics/vireo/blob/master/doc/release.rst
 .. _vireoSNP_donors.ipynb: https://github.com/single-cell-genetics/vireo/blob/master/examples/vireoSNP_donors.ipynb
 .. _vireoSNP_clones.ipynb: https://github.com/single-cell-genetics/vireo/blob/master/examples/vireoSNP_clones.ipynb
+.. _donor_match.ipynb: https://github.com/single-cell-genetics/vireo/blob/master/examples/donor_match.ipynb
 
 
 Installation

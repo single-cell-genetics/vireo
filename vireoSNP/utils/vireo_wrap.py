@@ -4,7 +4,7 @@
 
 import sys
 import numpy as np
-from .vireo_base import greed_match, donor_select
+from .vireo_base import optimal_match, donor_select
 from .vireo_model import Vireo
 
 
@@ -90,7 +90,7 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
 
     elif GT_prior is not None and n_donor > GT_prior.shape[1]:
         GT_prior_use = modelCA.GT_prob.copy()
-        idx = greed_match(GT_prior, GT_prior_use)
+        idx = optimal_match(GT_prior, GT_prior_use)[1]
         GT_prior_use[:, idx, :] = GT_prior
         _idx_order = np.append(idx, np.delete(np.arange(n_donor), idx))
         GT_prior_use = GT_prior_use[:, _idx_order, :]

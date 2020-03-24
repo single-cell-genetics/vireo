@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.stats import entropy
+from scipy.optimize import linear_sum_assignment
 from scipy.special import logsumexp, digamma, betaln, binom
 
 
@@ -139,28 +140,34 @@ def match(ref_ids, new_ids, uniq_ref_only=True):
     return RT_idx
 
 
-def greed_match(X, Z, axis=1):
+def optimal_match(X, Z, axis=1, return_delta=False):
     """
     Match Z to X by minimize the difference, 
-    hence Z[:, axis] is best aligned to X
+    hence np.take(Z, idx1, aixs) is best aligned to np.take(X, idx0, aixs)
+    
+    Hungarian algorithm is used: 
+    https://docs.scipy.org/doc/scipy-1.4.0/reference/generated/scipy.optimize.linear_sum_assignment.html
     """
+    X_copy = X.copy()
+    Z_copy = Z.copy()
     diff_mat = np.zeros((X.shape[axis], Z.shape[axis]))
     for i in range(X.shape[axis]):
         for j in range(Z.shape[axis]):
-            diff_mat[i, j] = np.mean(np.abs(X[:, i] - Z[:, j]))
-            
-    diff_copy = diff_mat.copy()
-    idx_out = -1 * np.ones(X.shape[axis], int)
-    while (-1 in idx_out):
-        idx_i = np.argmin(diff_copy) // diff_copy.shape[1]
-        idx_j = np.argmin(diff_copy) % diff_copy.shape[1]
-        idx_out[idx_i] = idx_j
-        # print(idx_i, idx_j, idx_out)
+            diff_mat[i, j] = np.mean(np.abs(np.take(X_copy, i, axis=axis) - 
+                                            np.take(Z_copy, j, axis=axis)))        
+    idx0, idx1 = linear_sum_assignment(diff_mat)    
+    if return_delta:
+        return idx0, idx1, diff_mat
+    else:
+        return idx0, idx1
 
-        diff_copy[idx_i, :] = np.max(diff_mat) + 1
-        diff_copy[:, idx_j] = np.max(diff_mat) + 1
-        
-    return idx_out
+
+def greed_match(X, Z, axis=1):
+    """
+    This method has been dispatched, please use optimal_match!
+    """
+    print("This method has been dispatched, please use optimal_match!")
+    return optimal_match(X, Z, axis=axis)[1]
 
 
 def donor_select(GT_prob, ID_prob, n_donor, mode="distance"):

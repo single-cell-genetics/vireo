@@ -2,6 +2,10 @@
 History
 =======
 
+Release v0.3.1 (25/03/2020)
+===========================
+* replace greed_match to optimal_match for aligning donors via genotype
+
 Release v0.3.0 (23/03/2020)
 ===========================
 * Rewrite the Vireo in the object-oriented way for easier upgrading and adding 

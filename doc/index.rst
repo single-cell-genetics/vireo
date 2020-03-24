@@ -31,9 +31,13 @@ Tutorials
 **donors**: `vireoSNP_donors.ipynb`_ gives example on donor deconvolution 
 manually
 
+**donors**: `donor_match.ipynb`_ gives example on aligning donors to other
+omics data or other batches
+
 **clones**: `vireoSNP_clones.ipynb`_ gives example on clone reconstruction on 
 mitochondral mutations
 
+.. _donor_match.ipynb: https://github.com/single-cell-genetics/vireo/blob/master/examples/donor_match.ipynb
 .. _vireoSNP_donors.ipynb: https://github.com/single-cell-genetics/vireo/blob/master/examples/vireoSNP_donors.ipynb
 .. _vireoSNP_clones.ipynb: https://github.com/single-cell-genetics/vireo/blob/master/examples/vireoSNP_clones.ipynb
 
