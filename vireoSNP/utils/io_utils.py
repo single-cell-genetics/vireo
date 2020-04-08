@@ -48,7 +48,7 @@ def read_vartrix(alt_mtx, ref_mtx, cell_file, vcf_file=None):
     """
     if vcf_file is not None:
         cell_dat = load_VCF(vcf_file, load_sample=False, biallelic_only=False)
-        cell_dat['variants'] = np.array(cell_vcf['variants'])
+        cell_dat['variants'] = np.array(cell_dat['variants'])
     else:
         cell_dat = {}
     cell_dat['AD'] = mmread(alt_mtx).tocsc()
