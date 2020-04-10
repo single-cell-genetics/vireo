@@ -2,6 +2,10 @@
 History
 =======
 
+Release v0.3.2 (10/04/2020)
+===========================
+* support donor variant match between with and without "chr" prefix
+
 Release v0.3.1 (25/03/2020)
 ===========================
 * replace greed_match to optimal_match for aligning donors via genotype

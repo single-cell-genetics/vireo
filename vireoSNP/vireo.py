@@ -16,6 +16,7 @@ from .utils.vireo_base import match, optimal_match
 from .utils.vireo_wrap import vireo_wrap
 
 from .plot.base_plot import plot_GT
+from .utils.io_utils import match_donor_VCF
 from .utils.io_utils import write_donor_id, read_cellSNP, read_vartrix
 from .utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
 from .utils.vcf_utils import read_sparse_GeneINFO, GenoINFO_maker
@@ -137,28 +138,10 @@ def main():
                 "please try another tag for genotype, e.g., GT")
             print("        %s" %options.donor_file)
             sys.exit(1)
+
+        cell_dat, donor_vcf = match_donor_VCF(cell_dat, donor_vcf)
         donor_GPb = parse_donor_GPb(donor_vcf['GenoINFO'][options.geno_tag], 
             options.geno_tag)
-        
-        mm_idx = match(cell_dat['variants'], donor_vcf['variants'])
-        mm_idx = mm_idx.astype(float)
-        idx1 = np.where(mm_idx == mm_idx)[0] #remove None
-        # TODO: check when chr is not compatible! given warning.
-        if len(idx1) == 0:
-            print("[vireo] warning: no variants matched to donor VCF, " + 
-                  "please check chr format!")
-        else:
-            print("[vireo] %d out %d variants matched to donor VCF" 
-                  %(len(idx1), len(cell_dat['variants'])))
-        idx2 = mm_idx[idx1].astype(int)
-
-        donor_GPb = donor_GPb[idx2, :, :]
-        cell_dat['AD'] = cell_dat['AD'][idx1, :]
-        cell_dat['DP'] = cell_dat['DP'][idx1, :]
-        cell_dat["variants"]  = [cell_dat["variants"][x] for x in idx1]
-        for _key in cell_dat["FixedINFO"].keys():
-            cell_dat["FixedINFO"][_key] = [
-                cell_dat["FixedINFO"][_key][x] for x in idx1]
 
         if n_donor is None or n_donor == donor_GPb.shape[1]:
             n_donor = donor_GPb.shape[1]

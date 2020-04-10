@@ -4,8 +4,49 @@ import numpy as np
 from scipy.io import mmread
 from itertools import permutations
 
+from .vireo_base import match
 from .vcf_utils import load_VCF, write_VCF, parse_donor_GPb
 from .vcf_utils import read_sparse_GeneINFO, GenoINFO_maker
+
+
+def match_donor_VCF(cell_dat, donor_vcf):
+    """Match variants between cell VCF and donor VCF information
+    """
+    mm_idx = match(cell_dat['variants'], donor_vcf['variants'])
+    mm_idx = mm_idx.astype(float)
+    if np.sum(mm_idx == mm_idx) == 0 or np.sum(mm_idx >= 0) == 0:
+        _cell_id = ["chr" + x for x in cell_dat['variants']]
+        mm_idx = match(_cell_id, donor_vcf['variants'])
+    if np.sum(mm_idx == mm_idx) == 0 or np.sum(mm_idx >= 0) == 0:
+        _donor_id = ["chr" + x for x in donor_vcf['variants']]
+        mm_idx = match(cell_dat['variants'], _donor_id)
+
+    idx1 = np.where(mm_idx == mm_idx)[0] #remove None
+    # TODO: check when chr is not compatible! given warning.
+    if len(idx1) == 0:
+        print("[vireo] warning: no variants matched to donor VCF, " + 
+                "please check chr format!")
+    else:
+        print("[vireo] %d out %d variants matched to donor VCF" 
+                %(len(idx1), len(cell_dat['variants'])))
+    idx2 = mm_idx[idx1].astype(int)
+
+    cell_dat['AD'] = cell_dat['AD'][idx1, :]
+    cell_dat['DP'] = cell_dat['DP'][idx1, :]
+    cell_dat["variants"]  = [cell_dat["variants"][x] for x in idx1]
+    for _key in cell_dat["FixedINFO"].keys():
+        cell_dat["FixedINFO"][_key] = [
+            cell_dat["FixedINFO"][_key][x] for x in idx1]
+
+    donor_vcf["variants"]  = [donor_vcf["variants"][x] for x in idx2]
+    for _key in donor_vcf["FixedINFO"].keys():
+        donor_vcf["FixedINFO"][_key] = [
+            donor_vcf["FixedINFO"][_key][x] for x in idx2]
+    for _key in donor_vcf["GenoINFO"].keys():
+        donor_vcf["GenoINFO"][_key] = [
+            donor_vcf["GenoINFO"][_key][x] for x in idx2]  
+
+    return cell_dat, donor_vcf
 
 
 def read_cellSNP(dir_name):
