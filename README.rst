@@ -47,11 +47,17 @@ line, and add ``-U`` for upgrading:
 
 .. code-block:: bash
 
-  pip install vireoSNP
+  pip install -U vireoSNP
 
-Alternatively, you can download or clone this repository and type 
-``python setup.py install`` to install. In either case, add ``--user`` if you 
-don't have the permission as a root or for your Python environment.
+Alternatively, you can install from this GitHub repository for latest (often 
+development) version by following command line
+
+.. code-block:: bash
+
+  pip install -U git+https://github.com/single-cell-genetics/vireo
+
+In either case, add ``--user`` if you don't have the write permission for your 
+Python environment.
 
 For more instructions, see the installation_ manual.
 

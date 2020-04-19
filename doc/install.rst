@@ -45,6 +45,12 @@ latest version) and run python setup in terminal:
 
   python setup.py install
 
+You can also use the following shortcut
+
+.. code-block:: bash
+
+  pip install -U git+https://github.com/single-cell-genetics/vireo
+
 In any case, if had the permission error for installation as you are not root, 
 add ``--user``.
 
