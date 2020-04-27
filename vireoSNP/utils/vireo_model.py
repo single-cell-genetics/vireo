@@ -1,8 +1,10 @@
 import itertools
 import numpy as np
+import multiprocessing
 from scipy.stats import entropy
 from scipy.special import logsumexp, digamma, betaln
 from .vireo_base import normalize, loglik_amplify, beta_entropy, get_binom_coeff
+from .vireo_bulk import VireoBulk
 
 __docformat__ = "restructuredtext en"
 
@@ -350,12 +352,53 @@ class Vireo():
         return ID_prob_both[:, self.n_donor:], ID_prob_both[:, :self.n_donor]
 
 
-    def predit_ambient(self):
-        """Predict fraction of ambient RNA contaimination.
+    def predit_contamination(self, AD, DP, nproc=1):
+        """Predict fraction of RNA contamination from each donor based on 
+        vireoSNP.VireoBulk model.
         
-        Not implemented yet.
+        This function could indict both fraction of ambient RNA and also 
+        doublet potential.
+
+        Parameters
+        ----------
+        AD : scipy.sparse.csc_matrix (n_var, n_cell)
+            Sparse count matrix for alternative allele
+        DP : scipy.sparse.csc_matrix (n_var, n_cell)
+            Sparse count matrix for depths, alternative + refeerence alleles
+        nproc : int
+            Number of procecessors to use for parallel computing
+
+        Returns
+        -------
+        psi_mat : numpy array (n_cell, n_donor)
+            The fraction of each donor mixed in each cell
         """
-        print("Not implemented yet.")
+        def _get_psi(ad, dp, _n_donor, _theta, _GT_prob):
+            md_bulk = VireoBulk(n_donor = _n_donor, theta_init = _theta)
+            md_bulk.fit(ad, dp, _GT_prob, learn_theta=False)
+            return md_bulk.psi
+
+        def _call(RV):
+            return RV
+
+        if nproc > 1:
+            result = []
+            pool = multiprocessing.Pool(processes = nproc)
+            for i in range(AD.shape[1]): 
+                result.append(pool.apply_async(_get_psi, (AD[:, i].toarray(), 
+                    DP[:, i].toarray(), self.n_donor, self.beta_mu[0], 
+                    self.GT_prob), callback = _call))
+            pool.close()
+            pool.join()
+            Psi_mat = np.array([res.get() for res in result])
+        else:
+            Psi_mat = np.zeros((AD.shape[1], self.n_donor))
+            for i in range(AD.shape[1]):
+                Psi_mat[i, :] = _get_psi(
+                    AD[:, i].toarray(), DP[:, i].toarray(), 
+                    self.n_donor, self.beta_mu[0], self.GT_prob)
+
+        return Psi_mat
 
 
 def add_doublet_theta(beta_mu, beta_sum):

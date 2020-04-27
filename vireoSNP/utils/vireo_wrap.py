@@ -120,9 +120,11 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
     ## Predict doublets
     if check_doublet:
         doublet_prob, ID_prob = modelCA.predict_doublet(AD, DP)
+        component_psi = modelCA.predit_contamination(AD, DP)
     else:
         ID_prob = modelCA.ID_prob
         doublet_prob = np.zeros((AD.shape[1], AD.shape[1] * (AD.shape[1] - 1) / 2))
+        component_psi = np.zeros(ID_prob.shape)
 
     theta_shapes = np.append(modelCA.beta_mu * modelCA.beta_sum, 
                              (1 - modelCA.beta_mu) * modelCA.beta_sum, axis=0)
@@ -130,6 +132,7 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
     RV['ID_prob'] = ID_prob
     RV['GT_prob'] = modelCA.GT_prob
     RV['doublet_prob'] = doublet_prob
+    RV['component_psi'] = component_psi
     RV['theta_shapes'] = theta_shapes
     RV['theta_mean'] = modelCA.beta_mu
     RV['theta_sum'] = modelCA.beta_sum

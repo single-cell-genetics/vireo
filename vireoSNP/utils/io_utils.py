@@ -163,6 +163,14 @@ def write_donor_id(out_dir, donor_names, cell_names, n_vars, res_vireo):
         fid.writelines("\t".join([cell_names[i]] + line) + "\n")
     fid.close()
 
+    ## save contamination file
+    fid = open(out_dir + "/spot_fraction.tsv", "w")
+    fid.writelines("\t".join(["cell"] + donor_names) + "\n")
+    for i in range(len(cell_names)):
+        line = ["%.2e" %x for x in res_vireo['component_psi'][i, :]]
+        fid.writelines("\t".join([cell_names[i]] + line) + "\n")
+    fid.close()
+
     bashCommand = "gzip -f %s %s" %(out_dir + "/prob_singlet.tsv", 
         out_dir + "/prob_doublet.tsv")
     pro = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
