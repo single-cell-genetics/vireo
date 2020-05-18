@@ -8,7 +8,7 @@ WeiZhu_colors = np.array(['#4796d7', '#f79e54', '#79a702', '#df5858', '#556cab',
 
 def heat_matrix(X, yticks=None, xticks=None, rotation=45, cmap='BuGn', 
                 alpha=0.6, display_value=True, row_sort=False, 
-                aspect='auto', **kwargs):
+                aspect='auto', interpolation='none', **kwargs):
     """
     Plot heatmap of distance matrix
     """
@@ -18,7 +18,8 @@ def heat_matrix(X, yticks=None, xticks=None, rotation=45, cmap='BuGn',
         row_idx = np.argsort(np.dot(X, 2**np.arange(X.shape[1])))
         X = X[row_idx, :]
 
-    im = plt.imshow(X, cmap=cmap, alpha=alpha, aspect=aspect, **kwargs)
+    im = plt.imshow(X, cmap=cmap, alpha=alpha, aspect=aspect, 
+                    interpolation=interpolation, **kwargs)
     if xticks is not None:
         plt.xticks(range(len(xticks)), xticks, rotation=rotation)
         plt.xlim(-0.5, len(xticks) - 0.5)
@@ -72,7 +73,7 @@ def plot_GT(out_dir, cell_GPb, donor_names,
 
 
 def minicode_plot(barcode_set, var_ids=None, sample_ids=None, 
-                  cmap="Set3"):
+                  cmap="Set3", interpolation='none', **kwargs):
     import matplotlib.pyplot as plt
     
     mat = np.zeros((len(barcode_set[0][1:]), len(barcode_set)))
@@ -80,7 +81,7 @@ def minicode_plot(barcode_set, var_ids=None, sample_ids=None,
         for j in range(mat.shape[1]):
             mat[i, j] = float(barcode_set[j][i + 1])
             
-    im = plt.imshow(mat, cmap=cmap)
+    im = plt.imshow(mat, cmap=cmap, interpolation=interpolation, **kwargs)
     for i in range(mat.shape[0]):
         for j in range(mat.shape[1]):
             plt.text(j, i, int(mat[i, j]), 

@@ -7,6 +7,7 @@ Release v0.4.1 (18/05/2020)
 ===========================
 * add likelihood ratio test the differential donor abundance in bulk RNA-seq
   data
+* set the interpolation='none' for plt.imshow
 
 Release v0.4.0 (19/04/2020)
 ===========================
