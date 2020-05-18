@@ -110,13 +110,14 @@ class VireoBulk():
     def LR_test(self, **kwargs):
         """Likelihood ratio test for psi vector in a null hypothesis.
 
-        Use **kwargs for psi_null, AD, DP, GT_prob, log in vireoSNP.LR_test() 
-        function. Note, AD, DP, GT_prob the same as the self.fit() function.
+        Use **kwargs for psi_null, AD, DP, GT_prob, log in 
+        vireoSNP.LikRatio_test() function. Note, AD, DP, GT_prob the same as 
+        the self.fit() function.
         """
-        return LR_test(psi=self.psi, theta=self.theta, **kwargs)
+        return LikRatio_test(psi=self.psi, theta=self.theta, **kwargs)
 
 
-def LR_test(psi, psi_null, AD, DP, GT_prob, theta, log=False):
+def LikRatio_test(psi, psi_null, AD, DP, GT_prob, theta, log=False):
     """Likelihood ratio test for psi vector in a null hypothesis.
     Please use the same AD, DP, and GT_prob as the fit() function.
 
