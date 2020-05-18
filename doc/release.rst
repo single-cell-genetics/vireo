@@ -2,6 +2,16 @@
 History
 =======
 
+
+Release v0.4.1 (18/05/2020)
+===========================
+* add likelihood ratio test the differential donor abundance in bulk RNA-seq
+  data
+
+Release v0.4.0 (19/04/2020)
+===========================
+* add vireoBulk for demultiplexing in bulk RNA-seq data
+
 Release v0.3.2 (10/04/2020)
 ===========================
 * support donor variant match between with and without "chr" prefix

@@ -12,7 +12,7 @@ from .utils.vireo_base import match, optimal_match
 
 from .utils.vireo_wrap import vireo_wrap
 from .utils.vireo_model import Vireo
-from .utils.vireo_bulk import VireoBulk
+from .utils.vireo_bulk import VireoBulk, LR_test
 
 __all__ = [
     "__version__",

@@ -106,3 +106,61 @@ class VireoBulk():
         
         self.logLik = logLik[it]
         self.logLik_all = logLik[:it]
+
+    def LR_test(self, **kwargs):
+        """Likelihood ratio test for psi vector in a null hypothesis.
+
+        Use **kwargs for psi_null, AD, DP, GT_prob, log in vireoSNP.LR_test() 
+        function. Note, AD, DP, GT_prob the same as the self.fit() function.
+        """
+        return LR_test(psi=self.psi, theta=self.theta, **kwargs)
+
+
+def LR_test(psi, psi_null, AD, DP, GT_prob, theta, log=False):
+    """Likelihood ratio test for psi vector in a null hypothesis.
+    Please use the same AD, DP, and GT_prob as the fit() function.
+
+    Parameters
+    ----------
+    psi: numpy.array (n_donor, )
+        The fractional abundance of each donor in the mixture for alternative
+        hypothesis
+    psi_null: numpy.array (n_donor, )
+        The psi vector in a null hypothesis
+    AD: numpy.array, (n_variant, ), int
+        The count vector for alternative allele in all variants
+    DP: numpy.array (n_variant, ), int
+        The count vector for depths in all variants (i.e., two alleles)
+    GT_prob: numpy.array, (n_variants, n_donor, n_GT)
+        The probability tensor for each genotype in each donor
+    theta: numpy.array (n_GT, )
+        The alternative allele rate in each genotype category
+    log: bool
+        If return p value in logarithm scale
+
+    Return
+    ------
+    statistic: float
+        The calculated chi2-statistic.
+    pvalue: float
+        The single-tailed p-value.
+    """
+    from scipy.stats import chi2
+
+    BD = DP - AD
+    theta_vct_alt = np.dot(np.dot(GT_prob, theta), psi)
+    logLik_alt = np.sum(
+        AD * np.log(theta_vct_alt) + BD * np.log(1 - theta_vct_alt))
+
+    theta_vct_null = np.dot(np.dot(GT_prob, theta), psi_null)
+    logLik_null = np.sum(
+        AD * np.log(theta_vct_null) + BD * np.log(1 - theta_vct_null))
+
+    LR = 2 * (logLik_alt - logLik_null)
+    df = len(psi_null) - 1
+    if log:
+        pval = chi2.logsf(LR, df)
+    else:
+        pval = chi2.sf(LR, df)
+    
+    return LR, pval
