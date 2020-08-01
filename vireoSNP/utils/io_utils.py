@@ -167,3 +167,18 @@ def write_donor_id(out_dir, donor_names, cell_names, n_vars, res_vireo):
         out_dir + "/prob_doublet.tsv")
     pro = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     pro.communicate()[0]
+
+def make_whitelists(donor_id_file, out_prefix):
+    """Generate whitelist for each donor as input for umi_tools extract
+    """
+    table = np.genfromtxt(donor_id_file, dtype='str', delimiter='\t')[1:, :]
+    table = table[table[:, 1] != 'unassigned', :]
+    table = table[table[:, 1] != 'doublet', :]
+    
+    for _donor in np.unique(table[:, 1]):
+        idx = table[:, 1] == _donor
+        barcodes = table[idx, 0]
+        fid = open(out_prefix + "_%s.txt" %_donor, "w")
+        for _line in barcodes:
+            fid.writelines(_line.split('-')[0] + '\n')
+        fid.close()
