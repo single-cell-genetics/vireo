@@ -33,7 +33,7 @@ class MitoMut():
 
         if variant_names is not None:
             #sanity check for length of variant names
-            if len(variant_names) != len(ad):
+            if len(variant_names) != len(self.ad):
                 print('No. of variant names does not match length of AD!')
             else:
                 self.variants = variant_names
