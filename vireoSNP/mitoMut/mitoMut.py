@@ -29,7 +29,7 @@ class MitoMut():
         if len(self.ad) != len(self.dp):
             print('AD and DP length do not match!')
         else:
-            print('%.2f variants detected' %(len(self.ad)))
+            print(str(len(self.ad)) + ' variants detected')
 
         if variant_names is not None:
             #sanity check for length of variant names
@@ -51,7 +51,7 @@ class MitoMut():
         params1 = model1.fit((_a, _d), max_iters=3000, init_method="mixbin", early_stop=False, n_tolerance=10)
         params2 = model2.fit((_a, _d), max_iters=3000, init_method="mixbin", early_stop=False, n_tolerance=10)
         p_val = bbmix.models.LR_test(model1.losses[-1] - model2.losses[-1], df = 3)
-        print("Cells qualified:%.2f\tmodel1:%.2f\tmodel2:%.2f\tp value:%.2f" %(len(_a),model1.losses[-1],model2.losses[-1],p_val))
+        print("Cells qualified: " + str(len(_a)) + "\tmodel1:%.2f\tmodel2:%.2f\tp value:%.2f" %(model1.losses[-1],model2.losses[-1],p_val))
 
         return len(_a), p_val, params1, params2, model1.losses[-1], model2.losses[-1]
 
@@ -66,7 +66,7 @@ class MitoMut():
         params1 = model1.fit((_a, _d), max_iters=500, early_stop=True)
         params2 = model2.fit((_a, _d), max_iters=500, early_stop=True)
         p_val = bbmix.models.LR_test(model1.losses[-1] - model2.losses[-1], df = 2)
-        print("Cells qualified:%.2f\tmodel1:%.2f\tmodel2:%.2f\tp value:%.2f" %(len(_a),model1.losses[-1],model2.losses[-1],p_val))
+        print("Cells qualified: " + str(len(_a)) + "\tmodel1:%.2f\tmodel2:%.2f\tp value:%.2f" %(model1.losses[-1],model2.losses[-1],p_val))
 
         return len(_a), p_val, params1, params2, model1.losses[-1], model2.losses[-1]
     
@@ -87,7 +87,7 @@ class MitoMut():
 
         delta_BIC = model1.model_scores["BIC"] - model2.model_scores["BIC"]
 
-        print("Cells qualified:%.2f\tmodel1 BIC:%.2f\tmodel2 BIC:%.2f\t deltaBIC:%.2f" %(len(_a),model2.model_scores["BIC"],model2.model_scores["BIC"],delta_BIC))
+        print("Cells qualified: " + str(len(_a)) + "\tmodel1 BIC:%.2f\tmodel2 BIC:%.2f\t deltaBIC:%.2f" %(model2.model_scores["BIC"],model2.model_scores["BIC"],delta_BIC))
 
         return len(_a), delta_BIC, params1, params2, model1.model_scores["BIC"], model2.model_scores["BIC"]
 
@@ -110,7 +110,7 @@ class MitoMut():
         results = []
         t0=time.time()
 
-        print("Initializing fit(mode: deltaBIC) on %.2f variants..." %(len(self.ad)))
+        print("Initializing fit(mode: deltaBIC) on " + str(len(self.ad)) + " variants...")
 
         for i in range(len(self.ad)):
             inputs = []
@@ -138,11 +138,14 @@ class MitoMut():
                     self.output_list[i].append(0)
 
         t1 = time.time()
-        print("deltaBIC was calculated for %.2f variants and took:%.2f minutes" %(int(len(self.ad)),(t1-t0)/60))
+        print("deltaBIC was calculated for " + str(len(self.ad)) + " variants and took:%.2f minutes" %((t1-t0)/60))
 
         self.df = pd.DataFrame(data=self.output_list)
         self.df = self.df.transpose()
         self.df.columns = ['num_cells','deltaBIC', 'params1', 'params2', 'model1BIC', 'model2BIC']
+
+        if self.variants is not None:
+            self.df = pd.concat([pd.Series(self.variants), self.df], axis=1)
 
         if export_csv is True:
             if self._check_outdir_exist(out_dir) is True:
@@ -159,7 +162,7 @@ class MitoMut():
         pool = mp.Pool(processes=nproc)
         results = []
         t0 = time.time()
-        print("Initializing fit(mode: LR) on %.2f variants..." %(len(self.ad)))
+        print("Initializing fit(mode: LR) on" + len(self.ad) + "variants...")
 
         if beta_mode is False:
             func = self._binomMixture
@@ -192,11 +195,14 @@ class MitoMut():
                     self.output_list[i].append(0)
 
         t1 = time.time()
-        print("deltaBIC was calculated for %.2f variants and took:%.2f minutes" %(int(len(self.ad)),(t1-t0)/60))
+        print("Log likelihood was calculated for" + str(len(self.ad)) + " variants and took:%.2f minutes" %((t1-t0)/60))
 
         self.df = pd.DataFrame(data=self.output_list)
         self.df = self.df.transpose()
         self.df.columns = ['num_cells','p_value', 'params1', 'params2', 'model1_logLik', 'model2_logLik']
+
+        if self.variants is not None:
+            self.df = pd.concat([pd.Series(self.variants), self.df], axis=1)
 
         if export_csv is True:
             if self._check_outdir_exist(out_dir) is True:
@@ -220,7 +226,7 @@ class MitoMut():
 
             best_ad = self.ad[idx]
             best_dp = self.dp[idx]
-            print('Number of variants passing threshold:%.2f' %(len(best_ad)))
+            print('Number of variants passing threshold: '  + str(len(best_ad)))
 
         fname = by + '_' + str(threshold) + '_'
 
@@ -254,9 +260,10 @@ class MitoMut():
         return best_ad, best_dp
 
 if __name__ == '__main__':
-    test_ad = mmread("../data/mitoDNA/cellSNP.tag.AD.mtx")
-    test_dp = mmread("../data/mitoDNA/cellSNP.tag.DP.mtx")
+    test_ad = mmread("data/mitoDNA/cellSNP.tag.AD.mtx")
+    test_dp = mmread("data/mitoDNA/cellSNP.tag.DP.mtx")
 
     mdphd = MitoMut(AD = test_ad, DP = test_dp, variant_names = None)
-    df = mdphd.fit_deltaBIC(out_dir='../vireoSNP/mitoMut/out/', nproc=8)
+    df = mdphd.fit_deltaBIC(out_dir='data/mitoDNA/mitoMutOUT', nproc=8)
+    final = mdphd.filter(by='deltaBIC', threshold = 500, out_dir = 'data/mitoDNA/mitoMutOUT')
     print(df)
