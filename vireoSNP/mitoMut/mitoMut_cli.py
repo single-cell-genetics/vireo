@@ -8,7 +8,7 @@ from scipy.io import mmread
 from optparse import OptionParser, OptionGroup
 
 from vireoSNP import __version__
-from vireoSNP.utils.io_utils import read_cellSNP, read_vartrix
+from vireoSNP.utils.io_utils import read_cellSNP, read_vartrix, read_sparse_GeneINFO
 from vireoSNP.utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
 
 from .mitoMut import MitoMut
@@ -62,7 +62,7 @@ def main():
     if (options.cell_data is None and options.mtx_data is None and 
         options.vcf_data is None):
         print("Error: need cell data in vcf file, or cellSNP output folder, or "
-              "matrix filles: AD.mtx,DP.mtx")
+              "matrix files: AD.mtx,DP.mtx")
         sys.exit(1)
     elif options.mtx_data is not None:
         print("[mitoMut] Loading matrix files ...")
@@ -72,7 +72,7 @@ def main():
             sys.exit(1)
         cell_dat = {}
         cell_dat['AD'] = mmread(matrix_files[0])
-        cell_dat['AD'] = mmread(matrix_files[1])
+        cell_dat['DP'] = mmread(matrix_files[1])
         cell_dat['variants'] = ['SNP%d' %(x + 1) for x in 
                                 range(cell_dat['AD'].shape[0])]
         
@@ -93,10 +93,10 @@ def main():
     
     
     ## Main functions
-    mdphd = MitoMut(AD = cell_dat['AD'], DP = cell_dat['AD'], 
+    mdphd = MitoMut(AD = cell_dat['AD'], DP = cell_dat['DP'], 
                     variant_names = cell_dat['variants'])
     
-    df = mdphd.fit_deltaBIC(nproc = nproc, beta_mode = False)
+    df = mdphd.fit_deltaBIC(out_dir = out_dir, nproc = nproc, beta_mode = False)
     print(df)
     final = mdphd.filter(by='deltaBIC', threshold = 500, out_dir = out_dir)
    

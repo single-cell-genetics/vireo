@@ -53,7 +53,7 @@ class MitoMut():
         p_val = bbmix.models.LR_test(model1.losses[-1] - model2.losses[-1], df = 3)
         print("Cells qualified:%.2f\tmodel1:%.2f\tmodel2:%.2f\tp value:%.2f" %(len(_a),model1.losses[-1],model2.losses[-1],p_val))
 
-        return len(_a), pval, params1, params2, model1.losses[-1], model2.losses[-1]
+        return len(_a), p_val, params1, params2, model1.losses[-1], model2.losses[-1]
 
     def _binomMixture(self, _a, _d, fix_seed=False):
         #input ad dp arrays, output pval
@@ -91,7 +91,19 @@ class MitoMut():
 
         return len(_a), delta_BIC, params1, params2, model1.model_scores["BIC"], model2.model_scores["BIC"]
 
-    def fit_deltaBIC(self, nproc=30, minDP=10, minAD=1, beta_mode=False, export_csv = True):
+    def _check_outdir_exist(self, out_dir):
+        if path.exists(out_dir) is not True:
+            try:
+                os.mkdir(out_dir)
+                return True
+            except:
+                print("Can't make directory, do you have permission?")
+                return False
+        else:
+            print('Out directory already exists, overwriting content inside')
+            return True
+
+    def fit_deltaBIC(self, out_dir, nproc=30, minDP=10, minAD=1, beta_mode=False, export_csv = True):
         #here we fit and choose model based on deltaBIC
         print('CPUs used:', nproc)
         pool = mp.Pool(processes=nproc)
@@ -133,12 +145,15 @@ class MitoMut():
         self.df.columns = ['num_cells','deltaBIC', 'params1', 'params2', 'model1BIC', 'model2BIC']
 
         if export_csv is True:
-            self.df.to_csv('BIC_params.csv', index=False)
+            if self._check_outdir_exist(out_dir) is True:
+                self.df.to_csv(out_dir + '/BIC_params.csv', index=False)
+            else:
+                self.df.to_csv('BIC_params.csv', index=False)
 
         #return df of all metrics
         return self.df
 
-    def fit_logLik(self, nproc=30, minDP=5, minAD=1, beta_mode=False, export_csv=True):
+    def fit_logLik(self, out_dir, nproc=30, minDP=5, minAD=1, beta_mode=False, export_csv=True):
         #here we fit and choose model using Likelihood ratio test + neg log pval
         print('CPUs used:', nproc)
         pool = mp.Pool(processes=nproc)
@@ -184,12 +199,15 @@ class MitoMut():
         self.df.columns = ['num_cells','p_value', 'params1', 'params2', 'model1_logLik', 'model2_logLik']
 
         if export_csv is True:
-            self.df.to_csv('pval_params.csv', index=False)
+            if self._check_outdir_exist(out_dir) is True:
+                self.df.to_csv(out_dir + '/BIC_params.csv', index=False)
+            else:
+                self.df.to_csv('pval_params.csv', index=False)
 
         #return df of all metrics
         return self.df
 
-    def filter(self, by, threshold=500, export_heatmap=True, export_mtx=True, out_dir = None):
+    def filter(self, by, threshold=500, export_heatmap=True, export_mtx=True, out_dir=None):
         #by should be a string
 
         if self.df is None:
@@ -236,10 +254,9 @@ class MitoMut():
         return best_ad, best_dp
 
 if __name__ == '__main__':
-    test_ad = mmread("C:/Users/aaronkwc/Downloads/dedup_kim_cellSNP.tag.AD.mtx")
-    test_dp = mmread("C:/Users/aaronkwc/Downloads/dedup_kim_cellSNP.tag.DP.mtx")
+    test_ad = mmread("../data/mitoDNA/cellSNP.tag.AD.mtx")
+    test_dp = mmread("../data/mitoDNA/cellSNP.tag.DP.mtx")
 
     mdphd = MitoMut(AD = test_ad, DP = test_dp, variant_names = None)
-    df = mdphd.fit_deltaBIC(nproc=30, beta_mode=False)
+    df = mdphd.fit_deltaBIC(out_dir='../vireoSNP/mitoMut/out/', nproc=8)
     print(df)
-    final = mdphd.filter(by='deltaBIC', threshold=500, out_dir='kim_dataset_bic')
