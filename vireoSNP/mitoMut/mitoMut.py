@@ -37,8 +37,7 @@ class MitoMut():
                 print('No. of variant names does not match length of AD!')
             else:
                 self.variants = variant_names
-        else:
-            self.variants = None
+                print("variant names detected")
 
     def _betabinomMixture(self, _a, _d, fix_seed=False):
         #input ad dp arrays, output pval

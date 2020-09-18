@@ -109,3 +109,8 @@ venv.bak/
 # test and data
 data/outs
 temp/
+data/mitoDNA/kim_cellSNP.cells.vcf.gz
+data/mitoMutOUT/BIC_params.csv
+data/mitoMutOUT/deltaBIC_500_passed_ad.mtx
+data/mitoMutOUT/deltaBIC_500_passed_dp.mtx
+data/mitoMutOUT/deltaBIC_500_top variants heatmap.pdf
