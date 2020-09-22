@@ -20,7 +20,7 @@ from bbmix.models import MixtureBetaBinomial
 import multiprocessing as mp
 
 class MitoMut():
-    def __init__(self, AD, DP, variant_names = None):
+    def __init__(self, AD, DP, variant_names = None, dataset_name = None):
         #initiate object with AD/DP sparse matrices
         #check if AD and DP have same length first
         self.ad = AD.toarray()
@@ -37,9 +37,27 @@ class MitoMut():
                 print('No. of variant names does not match length of AD!')
             else:
                 self.variants = variant_names
-                print("variant names detected")
+                print("variant names detected") 
+            
+        else:
+            self.variants = None
+
+        if dataset_name is not None:
+            self.dataset = dataset_name
 
     def _betabinomMixture(self, _a, _d, fix_seed=False):
+        #basic staistics
+        #Total DP across all cells
+        total_DP = np.sum(_d)
+        #Median DP across all cells
+        median_DP = np.median(_d)
+        #Total AD across all cells
+        total_AD = np.sum(_a)
+        #Median AD across all cells
+        median_AD = np.median(_a)
+        #How many cells have this variant?
+        non_zero = np.count_nonzero(_a)
+
         #input ad dp arrays, output pval
         model1 = MixtureBetaBinomial(n_components = 1, max_m_step_iter=3000,tor=1e-20, n_init_searches=100)
         model2 = MixtureBetaBinomial(n_components = 2, max_m_step_iter=3000,tor=1e-20, n_init_searches=500)
@@ -52,9 +70,21 @@ class MitoMut():
         p_val = bbmix.models.LR_test(model1.losses[-1] - model2.losses[-1], df = 3)
         print("Cells qualified: " + str(len(_a)) + "\tmodel1:%.2f\tmodel2:%.2f\tp value:%.2f" %(model1.losses[-1],model2.losses[-1],p_val))
 
-        return len(_a), p_val, params1, params2, model1.losses[-1], model2.losses[-1]
+        return len(_a), p_val, params1, params2, model1.losses[-1], model2.losses[-1], non_zero, total_DP, median_DP, total_AD, median_AD
 
     def _binomMixture(self, _a, _d, fix_seed=False):
+        #basic staistics
+        #Total DP across all cells
+        total_DP = np.sum(_d)
+        #Median DP across all cells
+        median_DP = np.median(_d)
+        #Total AD across all cells
+        total_AD = np.sum(_a)
+        #Median AD across all cells
+        median_AD = np.median(_a)
+        #How many cells have this variant?
+        non_zero = np.count_nonzero(_a)
+
         #input ad dp arrays, output pval
         model1 = MixtureBinomial(n_components = 1, tor=1e-20)
         model2 = MixtureBinomial(n_components = 2,tor=1e-20)
@@ -67,13 +97,25 @@ class MitoMut():
         p_val = bbmix.models.LR_test(model1.losses[-1] - model2.losses[-1], df = 2)
         print("Cells qualified: " + str(len(_a)) + "\tmodel1:%.2f\tmodel2:%.2f\tp value:%.2f" %(model1.losses[-1],model2.losses[-1],p_val))
 
-        return len(_a), p_val, params1, params2, model1.losses[-1], model2.losses[-1]
+        return len(_a), p_val, params1, params2, model1.losses[-1], model2.losses[-1], non_zero, total_DP, median_DP, total_AD, median_AD
     
     def _deltaBIC(self, _a, _d, fix_seed=None, beta_mode=False):
         #input ad dp arrays, output params, BICs, delta BIC        
         if fix_seed is not None:
             np.random.seed(fix_seed)
         
+        #basic staistics
+        #Total DP across all cells
+        total_DP = np.sum(_d)
+        #Median DP across all cells
+        median_DP = np.median(_d)
+        #Total AD across all cells
+        total_AD = np.sum(_a)
+        #Median AD across all cells
+        median_AD = np.median(_a)
+        #How many cells have this variant?
+        non_zero = np.count_nonzero(_a)
+
         model1 = MixtureBinomial(n_components = 1, tor=1e-20)
         params1 = model1.fit((_a, _d), max_iters=500, early_stop=True)
 
@@ -86,9 +128,14 @@ class MitoMut():
 
         delta_BIC = model1.model_scores["BIC"] - model2.model_scores["BIC"]
 
+        if np.max(np.array(params2)) >= 0.95:
+            new_mutation = False
+        else:
+            new_mutation = True
+
         print("Cells qualified: " + str(len(_a)) + "\tmodel1 BIC:%.2f\tmodel2 BIC:%.2f\t deltaBIC:%.2f" %(model2.model_scores["BIC"],model2.model_scores["BIC"],delta_BIC))
 
-        return len(_a), delta_BIC, params1, params2, model1.model_scores["BIC"], model2.model_scores["BIC"]
+        return len(_a), delta_BIC, params1, params2, model1.model_scores["BIC"], model2.model_scores["BIC"], non_zero, total_DP, median_DP, total_AD, median_AD, new_mutation
 
     def _check_outdir_exist(self, out_dir):
         if path.exists(out_dir) is not True:
@@ -125,7 +172,7 @@ class MitoMut():
         pool.join()
 
         #num cells, deltaBIC, params1, params2, model1BIC, model2BIC
-        self.output_list = [[] for i in range(6)]
+        self.output_list = [[] for i in range(12)]
 
         for res in results:
             if res is not None:
@@ -141,17 +188,20 @@ class MitoMut():
 
         self.df = pd.DataFrame(data=self.output_list)
         self.df = self.df.transpose()
-        self.df.columns = ['num_cells','deltaBIC', 'params1', 'params2', 'model1BIC', 'model2BIC']
+        self.df.columns = ['num_cells','deltaBIC', 'params1', 'params2', 'model1BIC', 'model2BIC', 'num_cells_nonzero_AD', 'total_DP', 'median_DP', 'total_AD', 'median_AD', 'new_mutation']
 
         if self.variants is not None:
             self.df = pd.concat([pd.Series(self.variants), self.df], axis=1)
 
+        self.sorted_df = self.df.sort_values(by=['deltaBIC'], ascending=False)
+
         if export_csv is True:
             if self._check_outdir_exist(out_dir) is True:
-                self.df.to_csv(out_dir + '/BIC_params.csv', index=False)
+                self.sorted_df.to_csv(out_dir + '/BIC_params.csv', index=False)
             else:
-                self.df.to_csv('BIC_params.csv', index=False)
+                self.sorted_df.to_csv('BIC_params.csv', index=False)
 
+        self.df.to_csv(out_dir + '/debug_unsorted_BIC_params.csv', index=False)
         #return df of all metrics
         return self.df
 
@@ -199,15 +249,17 @@ class MitoMut():
         self.df = pd.DataFrame(data=self.output_list)
         self.df = self.df.transpose()
         self.df.columns = ['num_cells','p_value', 'params1', 'params2', 'model1_logLik', 'model2_logLik']
-
+        
         if self.variants is not None:
             self.df = pd.concat([pd.Series(self.variants), self.df], axis=1)
 
+        self.sorted_df = self.df.sort_values(by=['p_value'])
+
         if export_csv is True:
             if self._check_outdir_exist(out_dir) is True:
-                self.df.to_csv(out_dir + '/BIC_params.csv', index=False)
+                self.sorted_df.to_csv(out_dir + '/BIC_params.csv', index=False)
             else:
-                self.df.to_csv('pval_params.csv', index=False)
+                self.sorted_df.to_csv('pval_params.csv', index=False)
 
         #return df of all metrics
         return self.df
@@ -248,7 +300,10 @@ class MitoMut():
             fig, ax = plt.subplots(figsize=(15,10))
             plt.title("Allele frequency of top variants")
             plt.style.use('seaborn-dark')
-            sns.heatmap(af, cmap='terrain_r')
+            if self.variants is not None:
+                sns.heatmap(af, cmap='terrain_r', yticklabels=best_vars)
+            else:
+                sns.heatmap(af, cmap='terrain_r')
             plt.savefig(out_dir + '/' + fname + 'top variants heatmap.pdf')
 
         #export ad dp mtx out for vireo
@@ -258,11 +313,71 @@ class MitoMut():
 
         return best_ad, best_dp
 
-if __name__ == '__main__':
-    test_ad = mmread("data/mitoDNA/cellSNP.tag.AD.mtx")
-    test_dp = mmread("data/mitoDNA/cellSNP.tag.DP.mtx")
+    def rankBIC(self, top, export_heatmap=True, export_mtx=True, out_dir=None):
+        #test function for ranking variants instead of using a cutoff
+        #top_rank = zip(*heapq.nlargest(top, enumerate(self.df.deltaBIC), key=operator.itemgetter(1)))[0]
+        self.new_mut_df = self.df[self.df.new_mutation == 'True']
+        #print(self.new_mut_df)
+        #top_rank = np.argpartition(np.array(self.new_mut_df.deltaBIC), -top)[-top:]
+        top_rank = self.new_mut_df.sort_values(by='deltaBIC', ascending=False)[0:top].index
+        #print(top_rank)
+        best_ad, best_dp = self.ad[top_rank], self.dp[top_rank]
 
-    mdphd = MitoMut(AD = test_ad, DP = test_dp, variant_names = None)
-    df = mdphd.fit_deltaBIC(out_dir='data/mitoDNA/mitoMutOUT', nproc=8)
-    final = mdphd.filter(by='deltaBIC', threshold = 500, out_dir = 'data/mitoDNA/mitoMutOUT')
-    print(df)
+        fname = 'top_' + str(top) + '_'
+
+        if self.variants is not None:
+            best_vars = np.array(self.variants)[top_rank]
+
+        if out_dir is not None:
+            if path.exists(out_dir) is not True:
+                try:
+                    os.mkdir(out_dir)
+                except:
+                    print("Can't make directory, do you have permission?")
+            else:
+                print('Out directory already exists, overwriting content inside')
+
+        if export_heatmap is True:
+            af = best_ad/best_dp
+            #af = af.fillna(0)
+            fig, ax = plt.subplots(figsize=(15,10))
+            plt.title("Allele frequency of top variants")
+            plt.style.use('seaborn-dark')
+            if self.variants is not None:
+                sns.heatmap(af, cmap='terrain_r', yticklabels=best_vars)
+            else:
+                sns.heatmap(af, cmap='terrain_r')
+            plt.savefig(out_dir + '/' + fname + 'variants heatmap.pdf')
+
+        #export ad dp mtx out for vireo
+        if export_mtx is True:
+            mmwrite(out_dir + '/' + fname + 'passed_ad.mtx', sparse.csr_matrix(best_ad))
+            mmwrite(out_dir + '/' + fname + 'passed_dp.mtx', sparse.csr_matrix(best_dp))
+
+        return best_ad, best_dp
+    
+    def read_df(self, file):
+        self.df = pd.read_csv(file)
+        return self.df
+
+if __name__ == '__main__':
+    from vireoSNP import __version__
+    from vireoSNP.utils.io_utils import read_cellSNP, read_vartrix, read_sparse_GeneINFO
+    from vireoSNP.utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
+
+    #test_ad = mmread("data/mitoDNA/cellSNP.tag.AD.mtx")
+    #test_dp = mmread("data/mitoDNA/cellSNP.tag.DP.mtx")
+
+    cell_vcf = load_VCF("data/mitoDNA/kim_cellSNP.cells.vcf.gz", biallelic_only=True)
+    cell_dat = read_sparse_GeneINFO(cell_vcf['GenoINFO'], keys=['AD', 'DP'])
+    for _key in ['samples', 'variants', 'FixedINFO', 'contigs', 'comments']:
+        cell_dat[_key] = cell_vcf[_key]
+
+    mdphd = MitoMut(AD = cell_dat['AD'], DP = cell_dat['DP'], 
+                    variant_names = cell_dat['variants'])
+
+    #mdphd = MitoMut(AD = test_ad, DP = test_dp, variant_names = None)
+    #df = mdphd.fit_deltaBIC(out_dir='data/mitoDNA/mitoMutOUT', nproc=15)
+    #final = mdphd.filter(by='deltaBIC', threshold = 500, out_dir = 'data/mitoDNA/mitoMutOUT')
+    df = mdphd.read_df('data/mitoDNA/mitoMutOUT/debug_unsorted_BIC_params.csv')
+    final = mdphd.rankBIC(top=100, out_dir='data/mitoDNA/mitoMutOUT')

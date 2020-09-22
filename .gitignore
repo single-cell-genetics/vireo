@@ -114,3 +114,26 @@ data/mitoMutOUT/BIC_params.csv
 data/mitoMutOUT/deltaBIC_500_passed_ad.mtx
 data/mitoMutOUT/deltaBIC_500_passed_dp.mtx
 data/mitoMutOUT/deltaBIC_500_top variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/top_50_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/top_50_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/top_50_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/top_30_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/top_30_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/top_30_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/top_10_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/top_10_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/top_10_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/top_100_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/top_100_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/top_100_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/deltaBIC_500_top variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/deltaBIC_500_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/deltaBIC_500_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/debug_unsorted_BIC_params.csv
+data/mitoDNA/mitoMutOUT/BIC_params.csv
+data/mitoDNA/mitoMutOUT/BIC_params.csv
+data/mitoDNA/mitoMutOUT/deltaBIC_500_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/deltaBIC_500_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/deltaBIC_500_top variants heatmap.pdf
+examples/vireoSNP_clones.ipynb
+examples/vireoSNP_clones.ipynb
