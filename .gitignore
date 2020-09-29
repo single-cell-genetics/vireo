@@ -137,3 +137,67 @@ data/mitoDNA/mitoMutOUT/deltaBIC_500_passed_dp.mtx
 data/mitoDNA/mitoMutOUT/deltaBIC_500_top variants heatmap.pdf
 examples/vireoSNP_clones.ipynb
 examples/vireoSNP_clones.ipynb
+data/mitoDNA/mitoMutOUT/top_500_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/top_500_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/top_500_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/new mutations/top_6_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/new mutations/top_6_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/new mutations/top_6_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/new mutations/top_50_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/new mutations/top_50_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/new mutations/top_50_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/new mutations/top_30_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/new mutations/top_30_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/new mutations/top_30_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/new mutations/top_20_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/new mutations/top_20_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/new mutations/top_20_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/new mutations/top_10_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/new mutations/top_10_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/new mutations/top_10_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/new mutations/new_mut_debug_unsorted_BIC_params.csv
+data/mitoDNA/mitoMutOUT/new mutations/new_mut_BIC_params.csv
+data/mitoDNA/mitoMutOUT/loose_both/top_50_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/loose_both/top_50_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/loose_both/top_50_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/loose_both/top_40_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/loose_both/top_40_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/loose_both/top_40_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/loose_both/top_30_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/loose_both/top_30_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/loose_both/top_30_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/loose_both/top_20_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/loose_both/top_10_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/loose_both/top_10_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/loose_both/top_10_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/loose_both/top_100_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/loose_both/top_100_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/loose_both/top_100_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/loose_both/loose_top_500_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/loose_both/loose_top_500_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/loose_both/loose_top_500_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/loose_both/loose_debug_unsorted_BIC_params.csv
+data/mitoDNA/mitoMutOUT/loose_both/loose_BIC_params.csv
+data/mitoDNA/mitoMutOUT/loose_both/both_top_20_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/loose_both/both_top_20_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/deltaBIC_500_top variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/deltaBIC_500_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/deltaBIC_500_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/BIC_params.csv
+data/mitoDNA/mitoMutOUT/as mutations/top_50_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/as mutations/top_50_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/as mutations/top_50_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/as mutations/top_30_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/as mutations/top_30_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/as mutations/top_30_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/as mutations/top_20_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/as mutations/top_20_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/as mutations/top_20_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/as mutations/top_10_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/as mutations/top_10_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/as mutations/top_10_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/as mutations/deltaBIC_500_top variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/as mutations/deltaBIC_500_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/as mutations/deltaBIC_500_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/as mutations/debug_unsorted_BIC_params.csv
+data/mitoDNA/mitoMutOUT/as mutations/BIC_params.csv

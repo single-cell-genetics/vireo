@@ -98,7 +98,8 @@ def main():
     
     df = mdphd.fit_deltaBIC(out_dir = out_dir, nproc = nproc, beta_mode = False)
     print(df)
-    final = mdphd.filter(by='deltaBIC', threshold = 500, out_dir = out_dir)
+    #final = mdphd.filter(by='deltaBIC', threshold = 500, out_dir = out_dir)
+    final = mdphd.rankBIC(top=10, out_dir='data/mitoDNA/mitoMutOUT')
    
     
     run_time = time.time() - START_TIME

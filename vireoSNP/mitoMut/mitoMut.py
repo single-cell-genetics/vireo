@@ -128,14 +128,21 @@ class MitoMut():
 
         delta_BIC = model1.model_scores["BIC"] - model2.model_scores["BIC"]
 
-        if np.max(np.array(params2)) >= 0.95:
+        p = params2[0] , params2[1]
+        pi = params2[2], params2[3]
+
+        if np.max(np.array(pi)) < 0.95 and np.min(np.array(p)) < 0.05 and np.max(np.array(p)) > 0.1:
+            new_mutation = True
+            as_mutation = False
+        elif np.min(np.array(p)) > 0.1 and np.min(np.array(pi)) > 0.15:
+            as_mutation = True
             new_mutation = False
         else:
-            new_mutation = True
+            new_mutation, as_mutation = False, False
 
         print("Cells qualified: " + str(len(_a)) + "\tmodel1 BIC:%.2f\tmodel2 BIC:%.2f\t deltaBIC:%.2f" %(model2.model_scores["BIC"],model2.model_scores["BIC"],delta_BIC))
 
-        return len(_a), delta_BIC, params1, params2, model1.model_scores["BIC"], model2.model_scores["BIC"], non_zero, total_DP, median_DP, total_AD, median_AD, new_mutation
+        return len(_a), delta_BIC, params1, params2, model1.model_scores["BIC"], model2.model_scores["BIC"], non_zero, total_DP, median_DP, total_AD, median_AD, new_mutation, as_mutation
 
     def _check_outdir_exist(self, out_dir):
         if path.exists(out_dir) is not True:
@@ -172,7 +179,7 @@ class MitoMut():
         pool.join()
 
         #num cells, deltaBIC, params1, params2, model1BIC, model2BIC
-        self.output_list = [[] for i in range(12)]
+        self.output_list = [[] for i in range(13)]
 
         for res in results:
             if res is not None:
@@ -188,7 +195,7 @@ class MitoMut():
 
         self.df = pd.DataFrame(data=self.output_list)
         self.df = self.df.transpose()
-        self.df.columns = ['num_cells','deltaBIC', 'params1', 'params2', 'model1BIC', 'model2BIC', 'num_cells_nonzero_AD', 'total_DP', 'median_DP', 'total_AD', 'median_AD', 'new_mutation']
+        self.df.columns = ['num_cells','deltaBIC', 'params1', 'params2', 'model1BIC', 'model2BIC', 'num_cells_nonzero_AD', 'total_DP', 'median_DP', 'total_AD', 'median_AD', 'new_mutation', 'as_mutation']
 
         if self.variants is not None:
             self.df = pd.concat([pd.Series(self.variants), self.df], axis=1)
@@ -316,17 +323,29 @@ class MitoMut():
     def rankBIC(self, top, export_heatmap=True, export_mtx=True, out_dir=None):
         #test function for ranking variants instead of using a cutoff
         #top_rank = zip(*heapq.nlargest(top, enumerate(self.df.deltaBIC), key=operator.itemgetter(1)))[0]
-        self.new_mut_df = self.df[self.df.new_mutation == 'True']
+        self.new_mut_df = self.df[(self.df.new_mutation == 'True')|(self.df.as_mutation == 'True')]
+        #self.new_mut_df = self.df[self.df.new_mutation == 'True']
+        #self.as_mut_df = self.df[self.df.as_mutation == 'True'] 
         #print(self.new_mut_df)
         #top_rank = np.argpartition(np.array(self.new_mut_df.deltaBIC), -top)[-top:]
-        top_rank = self.new_mut_df.sort_values(by='deltaBIC', ascending=False)[0:top].index
-        #print(top_rank)
-        best_ad, best_dp = self.ad[top_rank], self.dp[top_rank]
+        #new_top_rank = self.new_mut_df.sort_values(by='deltaBIC', ascending=False)[0:top].index
+        #as_top_rank = self.as_mut_df.sort_values(by='deltaBIC', ascending=False)[0:top].index
+
+        idx = self.new_mut_df[self.new_mut_df.deltaBIC >= 500].index
+        print(len(idx))
+        #print(idx)
+        #idx2 = self.as_mut_df[self.as_mut_df.deltaBIC >= 500].index
+        #print(idx2)
+        #both_top_rank = idx.append(idx2)
+        #print(both_top_rank)
+        best_ad, best_dp = self.ad[idx], self.dp[idx]
+
+
 
         fname = 'top_' + str(top) + '_'
 
         if self.variants is not None:
-            best_vars = np.array(self.variants)[top_rank]
+            best_vars = np.array(self.variants)[idx]
 
         if out_dir is not None:
             if path.exists(out_dir) is not True:
@@ -361,23 +380,29 @@ class MitoMut():
         return self.df
 
 if __name__ == '__main__':
+    import vireoSNP
     from vireoSNP import __version__
-    from vireoSNP.utils.io_utils import read_cellSNP, read_vartrix, read_sparse_GeneINFO
-    from vireoSNP.utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
+    
+    #from vireoSNP.utils.io_utils import read_sparse_GeneINFO
+    #from vireoSNP.utils.vcf_utils import load_VCF, write_VCF, parse_donor_GPb
 
     #test_ad = mmread("data/mitoDNA/cellSNP.tag.AD.mtx")
     #test_dp = mmread("data/mitoDNA/cellSNP.tag.DP.mtx")
 
-    cell_vcf = load_VCF("data/mitoDNA/kim_cellSNP.cells.vcf.gz", biallelic_only=True)
-    cell_dat = read_sparse_GeneINFO(cell_vcf['GenoINFO'], keys=['AD', 'DP'])
-    for _key in ['samples', 'variants', 'FixedINFO', 'contigs', 'comments']:
-        cell_dat[_key] = cell_vcf[_key]
-
+    #cell_vcf = load_VCF("data/mitoDNA/kim_cellSNP.cells.vcf.gz", biallelic_only=True)
+    #cell_dat = read_sparse_GeneINFO(cell_vcf['GenoINFO'], keys=['AD', 'DP'])
+    #for _key in ['samples', 'variants', 'FixedINFO', 'contigs', 'comments']:
+        #cell_dat[_key] = cell_vcf[_key]
+    
+    cell_vcf = vireoSNP.load_VCF("data/mitoDNA/kim_cellSNP.cells.vcf.gz", biallelic_only=True)
+    cell_dat = vireoSNP.vcf.read_sparse_GeneINFO(cell_vcf['GenoINFO'], keys=['AD', 'DP'])
     mdphd = MitoMut(AD = cell_dat['AD'], DP = cell_dat['DP'], 
-                    variant_names = cell_dat['variants'])
+                    variant_names = cell_vcf['variants'])
 
-    #mdphd = MitoMut(AD = test_ad, DP = test_dp, variant_names = None)
-    #df = mdphd.fit_deltaBIC(out_dir='data/mitoDNA/mitoMutOUT', nproc=15)
+    #mdphd = MitoMut(AD = test_ad, DP = test_dp)
+    df = mdphd.fit_deltaBIC(out_dir='data/mitoDNA/mitoMutOUT', nproc=15)
     #final = mdphd.filter(by='deltaBIC', threshold = 500, out_dir = 'data/mitoDNA/mitoMutOUT')
     df = mdphd.read_df('data/mitoDNA/mitoMutOUT/debug_unsorted_BIC_params.csv')
-    final = mdphd.rankBIC(top=100, out_dir='data/mitoDNA/mitoMutOUT')
+    final = mdphd.rankBIC(top=500, out_dir='data/mitoDNA/mitoMutOUT')
+    #final2 = mdphd.rankBIC(top=100, out_dir='data/mitoDNA/mitoMutOUT')
+    #final3 = mdphd.rankBIC(top=50, out_dir='data/mitoDNA/mitoMutOUT')
