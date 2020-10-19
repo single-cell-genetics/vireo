@@ -394,15 +394,15 @@ if __name__ == '__main__':
     #for _key in ['samples', 'variants', 'FixedINFO', 'contigs', 'comments']:
         #cell_dat[_key] = cell_vcf[_key]
     
-    cell_vcf = vireoSNP.load_VCF("data/mitoDNA/kim_cellSNP.cells.vcf.gz", biallelic_only=True)
+    cell_vcf = vireoSNP.load_VCF("data/MGH26/MGH26_mode3.output/cellSNP.cells.vcf.gz", biallelic_only=True)
     cell_dat = vireoSNP.vcf.read_sparse_GeneINFO(cell_vcf['GenoINFO'], keys=['AD', 'DP'])
     mdphd = MitoMut(AD = cell_dat['AD'], DP = cell_dat['DP'], 
                     variant_names = cell_vcf['variants'])
 
     #mdphd = MitoMut(AD = test_ad, DP = test_dp)
-    df = mdphd.fit_deltaBIC(out_dir='data/mitoDNA/mitoMutOUT', nproc=15)
+    #df = mdphd.fit_deltaBIC(out_dir='data/MGH26/out', nproc=15)
     #final = mdphd.filter(by='deltaBIC', threshold = 500, out_dir = 'data/mitoDNA/mitoMutOUT')
-    df = mdphd.read_df('data/mitoDNA/mitoMutOUT/debug_unsorted_BIC_params.csv')
-    final = mdphd.rankBIC(top=500, out_dir='data/mitoDNA/mitoMutOUT')
+    df = mdphd.read_df('data/MGH26/out/debug_unsorted_BIC_params.csv')
+    final = mdphd.rankBIC(top=500, out_dir='data/MGH26/out')
     #final2 = mdphd.rankBIC(top=100, out_dir='data/mitoDNA/mitoMutOUT')
     #final3 = mdphd.rankBIC(top=50, out_dir='data/mitoDNA/mitoMutOUT')
