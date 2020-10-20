@@ -212,3 +212,7 @@ data/MGH26/out/debug_unsorted_BIC_params.csv
 data/MGH26/out/top_500_passed_ad.mtx
 data/MGH26/out/top_500_passed_dp.mtx
 data/MGH26/out/top_500_variants heatmap.pdf
+data/cd19/cellSNP.cells.vcf.gz
+data/kim/BIC_params.csv
+data/kim/debug_unsorted_BIC_params.csv
+examples/vireoSNP_clones.ipynb
