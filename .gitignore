@@ -201,3 +201,19 @@ data/mitoDNA/mitoMutOUT/as mutations/deltaBIC_500_passed_dp.mtx
 data/mitoDNA/mitoMutOUT/as mutations/deltaBIC_500_passed_ad.mtx
 data/mitoDNA/mitoMutOUT/as mutations/debug_unsorted_BIC_params.csv
 data/mitoDNA/mitoMutOUT/as mutations/BIC_params.csv
+data/mitoDNA/mitoMutOUT/BIC_params.csv
+data/mitoDNA/mitoMutOUT/old/BIC_params.csv
+data/mitoDNA/mitoMutOUT/old/debug_unsorted_BIC_params.csv
+data/mitoDNA/mitoMutOUT/old/top_100_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/old/top_100_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/old/top_100_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/old/top_10_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/old/top_10_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/old/top_10_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/old/top_30_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/old/top_30_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/old/top_30_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/old/top_50_passed_ad.mtx
+data/mitoDNA/mitoMutOUT/old/top_50_passed_dp.mtx
+data/mitoDNA/mitoMutOUT/old/top_50_variants heatmap.pdf
+data/mitoDNA/mitoMutOUT/qqplot.pdf
