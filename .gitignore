@@ -216,3 +216,7 @@ data/cd19/cellSNP.cells.vcf.gz
 data/kim/BIC_params.csv
 data/kim/debug_unsorted_BIC_params.csv
 examples/vireoSNP_clones.ipynb
+data/MGH31/out/debug_unsorted_BIC_params.csv
+data/MGH31/out/BIC_params.csv
+data/MGH31/cellSNP.cells.vcf.gz
+data/kim/cellSNP.cells.vcf.gz

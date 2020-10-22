@@ -99,7 +99,7 @@ class MitoMut():
 
         return len(_a), p_val, params1, params2, model1.losses[-1], model2.losses[-1], non_zero, total_DP, median_DP, total_AD, median_AD
     
-    def _deltaBIC(self, _a, _d, fix_seed=None, beta_mode=False):
+    def _deltaBIC(self, _a, _d, fix_seed=None, beta_mode=False, sim=False):
         #input ad dp arrays, output params, BICs, delta BIC        
         if fix_seed is not None:
             np.random.seed(fix_seed)
@@ -121,7 +121,12 @@ class MitoMut():
 
         if beta_mode is False:
             model2 = MixtureBinomial(n_components = 2,tor=1e-20)
-            params2 = model2.fit((_a, _d), max_iters=500, early_stop=True)
+            if sim is False:
+                params2 = model2.fit((_a, _d), max_iters=500, early_stop=True)
+            else:
+                a_sim = model1.sample(_d)
+                params1 = model1.fit((a_sim, _d), max_iters=500, early_stop=True)
+                params2 = model2.fit((a_sim, _d), max_iters=500, early_stop=True)
         else:
             model2 = MixtureBetaBinomial(n_components = 1, max_m_step_iter=3000,tor=1e-20, n_init_searches=100)
             params2 = model2.fit((_a, _d), max_iters=3000, init_method="mixbin", early_stop=False, n_tolerance=10)
@@ -157,7 +162,7 @@ class MitoMut():
             print('Out directory already exists, overwriting content inside')
             return True
 
-    def fit_deltaBIC(self, out_dir, nproc=30, minDP=10, minAD=1, beta_mode=False, export_csv = True):
+    def fit_deltaBIC(self, out_dir, nproc=30, minDP=10, minAD=1, beta_mode=False, export_csv = True, sim=False):
         #here we fit and choose model based on deltaBIC
         print('CPUs used:', nproc)
         pool = mp.Pool(processes=nproc)
@@ -171,7 +176,7 @@ class MitoMut():
             idx = self.dp[i,:] >= minDP
             ad_idx = self.ad[i,:] >= minAD
             if any(idx) is True and any(ad_idx) is True:
-                inputs.append([self.ad[i,idx], self.dp[i,idx], beta_mode])
+                inputs.append([self.ad[i,idx], self.dp[i,idx], beta_mode, sim])
                 results.append(pool.starmap_async(self._deltaBIC, inputs))
             else:
                 results.append(None)
@@ -395,13 +400,13 @@ if __name__ == '__main__':
     #for _key in ['samples', 'variants', 'FixedINFO', 'contigs', 'comments']:
         #cell_dat[_key] = cell_vcf[_key]
     
-    cell_vcf = vireoSNP.load_VCF("data/cd19/cellSNP.cells.vcf.gz", biallelic_only=True)
+    cell_vcf = vireoSNP.load_VCF("data/kim/cellSNP.cells.vcf.gz", biallelic_only=True)
     cell_dat = vireoSNP.vcf.read_sparse_GeneINFO(cell_vcf['GenoINFO'], keys=['AD', 'DP'])
     mdphd = MitoMut(AD = cell_dat['AD'], DP = cell_dat['DP'], 
                     variant_names = cell_vcf['variants'])
 
     #mdphd = MitoMut(AD = test_ad, DP = test_dp)
-    df = mdphd.fit_deltaBIC(out_dir='data/cd19/out', nproc=15)
+    df = mdphd.fit_deltaBIC(out_dir='data/kim/sim_out', nproc=15, sim=True)
     #final = mdphd.filter(by='deltaBIC', threshold = 500, out_dir = 'data/mitoDNA/mitoMutOUT')
     #df = mdphd.read_df('data/MGH26/out/debug_unsorted_BIC_params.csv')
     #final = mdphd.rankBIC(top=500, out_dir='data/MGH26/out')
