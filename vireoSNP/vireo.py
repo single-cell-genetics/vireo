@@ -187,7 +187,7 @@ def main():
         ASE_mode=options.ASE_mode)
 
     if (n_donor is not None and 
-        donor_GPb is not None and n_donor < donor_GPb.shape[2]):
+        donor_GPb is not None and n_donor < donor_GPb.shape[1]):
         idx = optimal_match(res_vireo['GT_prob'], donor_GPb)[1]
         donor_names = [donor_vcf['samples'][x] for x in idx]
 
