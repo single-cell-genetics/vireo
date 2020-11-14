@@ -13,9 +13,16 @@ high quality genotyping data to demultiplex cells.
 
 **Recommended strategies for genotyping cells:**
 
-* For human or genotyped species: `variant list`_ (given) + cellSNP_ (typing).
-* For species without known common variants: freebayes_ (calling) + cellSNP_ 
-  (typing)
+* For human or genotyped species: `variant list`_ (given) + cellsnp-lite_ (typing).
+* For species without known common variants: cellsnp-lite_ (calling & typing),
+  or freebayes_ (for calling of heterozygous SNPs first)
+
+.. note::
+   cellSNP_ was initially developed in Python based on pysam, which is 
+   convenient for a few thousand cells but becomes the computational bottleneck 
+   for large number of cells. Therefore, we have re-implemented it to 
+   cellsnp-lite_ in C/C++ with ~5x faster and ~50x less memory.
+
 
 1. Identify candidate SNPs
 ===========================
@@ -47,7 +54,7 @@ polymorphisms, specifically SNPs, indels, MNPs, and complex events smaller than
 the length of a short-read sequencing alignment. Importantly, freebayes_ has 
 a set of options to filter reads and variants.
 
-Alternatively, cellSNP_ has a similar feature (still under development) to 
+Alternatively, cellsnp-lite_ has a similar feature (still under development) to 
 pileup the whole genome and identify the heterozygous variants in the pooled 
 samples. However, this mode doesn't have a sophisticated model and filtering 
 strategy for indentifying candidate SNPs, and may struggle with confounders 
@@ -65,7 +72,8 @@ genotype each cell. We provide three common methods, with recommendation to
   this can be slow, as it doesn't allow parallel  computing and it doesn't 
   support the cell barcodes and UMI tag in the pooled BAM file for many cells.
 
-* This limitation motivates us to develop cellSNP_, a pysam wrap to pile up the 
+* This limitation motivates us to develop cellSNP_, a pysam wrap (now 
+  cellsnp-lite_ in C/C++) to pile up the 
   variants in each cell. The benefits include parallel computing, taking cell 
   barcoding tag and support UMIs.
 
@@ -81,7 +89,8 @@ demultiplex the pooled cells, see the manual_.
 .. _variant list: https://sourceforge.net/projects/cellsnp/files/SNPlist/
 .. _pre-processed SNP list: https://sourceforge.net/projects/cellsnp/files/SNPlist/
 .. _freebayes: https://github.com/ekg/freebayes
-.. _cellSNP: https://github.com/huangyh09/cellSNP
+.. _cellSNP: https://github.com/single-cell-genetics/cellSNP
+.. _cellsnp-lite: https://github.com/single-cell-genetics/cellsnp-lite
 .. _mpileup: http://www.htslib.org/doc/bcftools.html
 .. _vartrix: https://github.com/10XGenomics/vartrix
 .. _manual: https://vireosnp.readthedocs.io/en/latest/manual.html

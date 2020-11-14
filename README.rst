@@ -4,8 +4,8 @@
     :target: https://pypi.org/project/vireoSNP
 .. |Docs| image:: https://readthedocs.org/projects/vireosnp/badge/?version=latest
    :target: https://vireoSNP.readthedocs.io
-.. |Build Status| image:: https://travis-ci.org/PMBio/vireo.svg?branch=master
-   :target: https://travis-ci.org/PMBio/vireo
+.. |Build Status| image:: https://travis-ci.org/single-cell-genetics/vireo.svg?branch=master
+   :target: https://travis-ci.org/single-cell-genetics/vireo
 .. |DOI| image:: https://zenodo.org/badge/187803798.svg
    :target: https://zenodo.org/badge/latestdoi/187803798
 
