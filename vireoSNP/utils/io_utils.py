@@ -49,7 +49,7 @@ def match_donor_VCF(cell_dat, donor_vcf):
     return cell_dat, donor_vcf
 
 
-def read_cellSNP(dir_name):
+def read_cellSNP(dir_name, layers=['AD', 'DP']):
     """Read data from the cellSNP output directory
 
     Parameters
@@ -63,8 +63,8 @@ def read_cellSNP(dir_name):
     """
     cell_dat = load_VCF(dir_name + "/cellSNP.base.vcf.gz", load_sample=False,
                         biallelic_only=False)
-    cell_dat['AD'] = mmread(dir_name + "/cellSNP.tag.AD.mtx").tocsc()
-    cell_dat['DP'] = mmread(dir_name + "/cellSNP.tag.DP.mtx").tocsc()
+    for _layer in layers:
+        cell_dat[_layer] = mmread(dir_name + "/cellSNP.tag.%s.mtx" %(_layer)).tocsc()
     cell_dat['samples'] = np.genfromtxt(dir_name + "/cellSNP.samples.tsv", dtype=str)
     return cell_dat
 
