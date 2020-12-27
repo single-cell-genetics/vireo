@@ -4,6 +4,7 @@
 
 import sys
 import numpy as np
+from scipy.sparse import csc_matrix
 from .vireo_base import optimal_match, donor_select
 from .vireo_model import Vireo
 
@@ -14,6 +15,13 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
     """
     A wrap function to run vireo with multiple initializations
     """
+    if type(DP) is np.ndarray and np.mean(DP > 0) < 0.3:
+        print("Warning: input matrices is %.1f%% sparse, " 
+                %(100 - np.mean(DP > 0) * 100) +
+                "change to scipy.sparse.csc_matrix" )
+        AD = csc_matrix(AD)
+        DP = csc_matrix(DP)
+
     if learn_GT == False and n_extra_donor > 0:
         print("Searching from extra donors only works with learn_GT")
         n_extra_donor = 0

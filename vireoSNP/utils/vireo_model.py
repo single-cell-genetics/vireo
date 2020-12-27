@@ -1,6 +1,7 @@
 import itertools
 import numpy as np
 from scipy.stats import entropy
+from scipy.sparse import csc_matrix
 from scipy.special import logsumexp, digamma, betaln
 from .vireo_base import normalize, loglik_amplify, beta_entropy, get_binom_coeff
 
@@ -157,8 +158,8 @@ class Vireo():
         """Coordinate ascent for updating theta posterior parameters
         """
         BD = DP - AD
-        S1_gt = AD * self.ID_prob  #(n_var, n_donor)
-        S2_gt = BD * self.ID_prob  #(n_var, n_donor)
+        S1_gt = AD @ self.ID_prob  #(n_var, n_donor)
+        S2_gt = BD @ self.ID_prob  #(n_var, n_donor)
         
         _theta_s1 = np.zeros(self.beta_mu.shape)
         _theta_s2 = np.zeros(self.beta_mu.shape)
@@ -181,9 +182,9 @@ class Vireo():
         BD = DP - AD
         logLik_ID = np.zeros((AD.shape[1], self.n_donor))
         for ig in range(self.n_GT):
-            S1 = AD.transpose() * (self.GT_prob[:, :, ig] * self.digamma1_[:, :, ig])
-            S2 = BD.transpose() * (self.GT_prob[:, :, ig] * self.digamma2_[:, :, ig])
-            SS = DP.transpose() * (self.GT_prob[:, :, ig] * self.digammas_[:, :, ig])
+            S1 = AD.T @ (self.GT_prob[:, :, ig] * self.digamma1_[:, :, ig])
+            S2 = BD.T @ (self.GT_prob[:, :, ig] * self.digamma2_[:, :, ig])
+            SS = DP.T @ (self.GT_prob[:, :, ig] * self.digammas_[:, :, ig])
             logLik_ID += (S1 + S2 - SS)
         
         self.ID_prob = normalize(np.exp(loglik_amplify(
@@ -195,8 +196,8 @@ class Vireo():
     def update_GT_prob(self, AD, DP):
         """Coordinate ascent for updating genotype probability
         """
-        S1_gt = AD * self.ID_prob
-        SS_gt = DP * self.ID_prob
+        S1_gt = AD @ self.ID_prob
+        SS_gt = DP @ self.ID_prob
         S2_gt = SS_gt - S1_gt
         
         logLik_GT = np.zeros(self.GT_prior.shape)
@@ -219,9 +220,9 @@ class Vireo():
             BD = DP - AD
             logLik_ID = np.zeros((AD.shape[1], self.n_donor))
             for ig in range(self.n_GT):
-                S1 = AD.transpose() * (self.GT_prob[:, :, ig] * self.digamma1_[:, :, ig])
-                S2 = BD.transpose() * (self.GT_prob[:, :, ig] * self.digamma2_[:, :, ig])
-                SS = DP.transpose() * (self.GT_prob[:, :, ig] * self.digammas_[:, :, ig])
+                S1 = AD.T @ (self.GT_prob[:, :, ig] * self.digamma1_[:, :, ig])
+                S2 = BD.T @ (self.GT_prob[:, :, ig] * self.digamma2_[:, :, ig])
+                SS = DP.T @ (self.GT_prob[:, :, ig] * self.digammas_[:, :, ig])
                 logLik_ID += (S1 + S2 - SS)
 
         LB_p = np.sum(logLik_ID * self.ID_prob)
@@ -261,6 +262,13 @@ class Vireo():
         verbose : bool
             Whether print out log info
         """
+        if type(DP) is np.ndarray and np.mean(DP > 0) < 0.3:
+            print("Warning: input matrices is %.1f%% sparse, " 
+                  %(100 - np.mean(DP > 0) * 100) +
+                  "change to scipy.sparse.csc_matrix" )
+            AD = csc_matrix(AD)
+            DP = csc_matrix(DP)
+
         _binom_coeff = np.sum(get_binom_coeff(AD, DP))
         ELBO = np.zeros(max_iter)
         for it in range(max_iter):
@@ -330,9 +338,9 @@ class Vireo():
         _digamma2 = np.expand_dims(digamma(beta_sum_both * (1 - beta_mu_both)), 1)
         _digammas = np.expand_dims(digamma(beta_sum_both), 1)
         for ig in range(GT_both.shape[2]):
-            S1 = AD.transpose() * (GT_both[:, :, ig] * _digamma1[:, :, ig])
-            S2 = BD.transpose() * (GT_both[:, :, ig] * _digamma2[:, :, ig])
-            SS = DP.transpose() * (GT_both[:, :, ig] * _digammas[:, :, ig])
+            S1 = AD.T @ (GT_both[:, :, ig] * _digamma1[:, :, ig])
+            S2 = BD.T @ (GT_both[:, :, ig] * _digamma2[:, :, ig])
+            SS = DP.T @ (GT_both[:, :, ig] * _digammas[:, :, ig])
             logLik_ID += (S1 + S2 - SS)
 
         ID_prob_both = normalize(np.exp(loglik_amplify(
