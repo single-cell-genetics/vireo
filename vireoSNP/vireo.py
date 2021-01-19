@@ -74,7 +74,7 @@ def main():
         action="store_true", help="If use, turn off plotting GT distance.")
     group1.add_option("--randSeed", type="int", dest="rand_seed", default=None,
         help="Seed for random initialization [default: %default]")
-    group1.add_option("--cellRange", type="int", dest="cell_range", default=None,
+    group1.add_option("--cellRange", type="str", dest="cell_range", default=None,
         help="Range of cells to process, eg. 0-10000 [default: all]")
     # group1.add_option("--nproc", "-p", type="int", dest="nproc", default=1,
     #     help="Number of subprocesses [default: %default]")
