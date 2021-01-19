@@ -36,7 +36,7 @@ def main():
     parser.add_option("--cellData", "-c", dest="cell_data", default=None,
         help=("The cell genotype file in VCF format or cellSNP folder with "
               "sparse matrices."))
-    parser.add_option("--nDonor", "-N", type="int", dest="n_donor", 
+    parser.add_option("--nDonor", "-N", type="int", dest="n_donor",
         default=None, help=("Number of donors to demultiplex; can be larger "
         "than provided in donor_file"))
     parser.add_option("--outDir", "-o", dest="out_dir", default=None,
@@ -52,31 +52,33 @@ def main():
         "and region with bcftools -s and -R first!"))
     group0.add_option("--genoTag", "-t", dest="geno_tag", default='PL',
         help=("The tag for donor genotype: GT, GP, PL [default: %default]"))
-    
+
     group1 = OptionGroup(parser, "Optional arguments")
-    group1.add_option("--noDoublet", dest="no_doublet", action="store_true", 
+    group1.add_option("--noDoublet", dest="no_doublet", action="store_true",
         default=False, help="If use, not checking doublets.")
     group1.add_option("--nInit", "-M", type="int", dest="n_init", default=50,
         help=("Number of random initializations, when GT needs to learn "
         "[default: %default]"))
-    group1.add_option("--extraDonor", type=int, dest="n_extra_donor", 
+    group1.add_option("--extraDonor", type=int, dest="n_extra_donor",
         default=0, help=("Number of extra donor in pre-cluster, when GT "
         "needs to learn [default: %default]"))
-    group1.add_option("--extraDonorMode", dest="extra_donor_mode", 
+    group1.add_option("--extraDonorMode", dest="extra_donor_mode",
         default="distance", help=("Method for searching from extra donors. "
         "size: n_cell per donor; distance: GT distance between donors "
         "[default: %default]"))
-    group1.add_option("--forceLearnGT", dest="force_learnGT", default=False, 
+    group1.add_option("--forceLearnGT", dest="force_learnGT", default=False,
         action="store_true", help="If use, treat donor GT as prior only.")
-    group1.add_option("--ASEmode", dest="ASE_mode", default=False, 
+    group1.add_option("--ASEmode", dest="ASE_mode", default=False,
         action="store_true", help="If use, turn on SNP specific allelic ratio.")
-    group1.add_option("--noPlot", dest="no_plot", default=False, 
+    group1.add_option("--noPlot", dest="no_plot", default=False,
         action="store_true", help="If use, turn off plotting GT distance.")
     group1.add_option("--randSeed", type="int", dest="rand_seed", default=None,
         help="Seed for random initialization [default: %default]")
+    group1.add_option("--cellRange", type="int", dest="cell_range", default=None,
+        help="Range of cells to process, eg. 0-10000 [default: all]")
     # group1.add_option("--nproc", "-p", type="int", dest="nproc", default=1,
     #     help="Number of subprocesses [default: %default]")
-    
+
     parser.add_option_group(group0)
     parser.add_option_group(group1)
     (options, args) = parser.parse_args()
@@ -111,7 +113,7 @@ def main():
         elif len(vartrix_files) == 3:
             vartrix_files.append(None)
 
-        cell_dat = read_vartrix(vartrix_files[0], vartrix_files[1], 
+        cell_dat = read_vartrix(vartrix_files[0], vartrix_files[1],
                                 vartrix_files[2], vartrix_files[3])
     elif os.path.isdir(os.path.abspath(options.cell_data)):
         print("[vireo] Loading cell folder ...")
@@ -123,24 +125,32 @@ def main():
         for _key in ['samples', 'variants', 'FixedINFO', 'contigs', 'comments']:
             cell_dat[_key] = cell_vcf[_key]
 
+    ## subset input cell data if necessary
+    if options.cell_range is not None:
+        cellRange = options.cell_range.split("-")
+        cell_dat['AD'] = cell_dat['AD'][:,cellRange[0]:cellRange[1]]
+        cell_dat['DP'] = cell_dat['DP'][:,cellRange[0]:cellRange[1]]
+        cell_dat['samples'] = cell_dat['samples'][cellRange[0]:cellRange[1]]
+
+
     ## input donor genotype
     n_donor = options.n_donor
     if options.donor_file is not None:
         if "variants" not in cell_dat.keys():
             print("No variants information is loaded, please provide base.vcf.gz")
             sys.exit(1)
-        
+
         print("[vireo] Loading donor VCF file ...")
-        donor_vcf = load_VCF(options.donor_file, biallelic_only=True, 
+        donor_vcf = load_VCF(options.donor_file, biallelic_only=True,
                              sparse=False, format_list=[options.geno_tag])
         if (options.geno_tag not in donor_vcf['GenoINFO']):
-            print("[vireo] No " + options.geno_tag + " tag in donor genotype; " 
+            print("[vireo] No " + options.geno_tag + " tag in donor genotype; "
                 "please try another tag for genotype, e.g., GT")
             print("        %s" %options.donor_file)
             sys.exit(1)
 
         cell_dat, donor_vcf = match_donor_VCF(cell_dat, donor_vcf)
-        donor_GPb = parse_donor_GPb(donor_vcf['GenoINFO'][options.geno_tag], 
+        donor_GPb = parse_donor_GPb(donor_vcf['GenoINFO'][options.geno_tag],
             options.geno_tag)
 
         if n_donor is None or n_donor == donor_GPb.shape[1]:
@@ -152,7 +162,7 @@ def main():
             donor_names = ['donor%d' %x for x in range(n_donor)]
         else:
             learn_GT = True
-            donor_names = (donor_vcf['samples'] + 
+            donor_names = (donor_vcf['samples'] +
                 ['donor%d' %x for x in range(donor_GPb.shape[1], n_donor)])
     else:
         learn_GT = True
@@ -163,30 +173,30 @@ def main():
 
     if options.force_learnGT:
         learn_GT = True
-    
+
     # extra donor for initial search, only for learn_GT
     n_extra_donor = 0
     if learn_GT:
         if options.n_extra_donor is None or options.n_extra_donor == "None":
             n_extra_donor = int(round(np.sqrt(n_donor)))
         else:
-            n_extra_donor = options.n_extra_donor        
-    
+            n_extra_donor = options.n_extra_donor
+
     # number of initials, only for learn_GT
     n_init = options.n_init if learn_GT else 1
-    
+
     check_doublet = options.no_doublet == False
 
     ## run vireo model (try multiple initializations)
     print("[vireo] Demultiplex %d cells to %d donors with %d variants." %(
         cell_dat['AD'].shape[1], n_donor, cell_dat['AD'].shape[0]))
-    res_vireo = vireo_wrap(cell_dat['AD'], cell_dat['DP'], n_donor=n_donor, 
-        GT_prior=donor_GPb, learn_GT=learn_GT, n_init=n_init, 
+    res_vireo = vireo_wrap(cell_dat['AD'], cell_dat['DP'], n_donor=n_donor,
+        GT_prior=donor_GPb, learn_GT=learn_GT, n_init=n_init,
         n_extra_donor=n_extra_donor, extra_donor_mode=options.extra_donor_mode,
         check_doublet=check_doublet, random_seed=options.rand_seed,
         ASE_mode=options.ASE_mode)
 
-    if (n_donor is not None and 
+    if (n_donor is not None and
         donor_GPb is not None and n_donor < donor_GPb.shape[1]):
         idx = optimal_match(res_vireo['GT_prob'], donor_GPb)[1]
         donor_names = [donor_vcf['samples'][x] for x in idx]
@@ -197,7 +207,7 @@ def main():
     if options.no_plot == False and options.vartrix_data is None:
         idx = np.array(np.sum(cell_dat['DP'], axis=1) > (3*n_donor)).reshape(-1)
         if learn_GT and donor_GPb is not None:
-            plot_GT(out_dir, res_vireo['GT_prob'][idx, :, :], donor_names, 
+            plot_GT(out_dir, res_vireo['GT_prob'][idx, :, :], donor_names,
                     donor_GPb[idx, :, :], donor_vcf['samples'])
         else:
             plot_GT(out_dir, res_vireo['GT_prob'][idx, :, :], donor_names)
@@ -206,16 +216,16 @@ def main():
     if learn_GT and 'variants' in cell_dat.keys():
         donor_vcf_out = cell_dat
         donor_vcf_out['samples'] = donor_names
-        donor_vcf_out['GenoINFO'] = GenoINFO_maker(res_vireo['GT_prob'], 
-            cell_dat['AD'] * res_vireo['ID_prob'], 
+        donor_vcf_out['GenoINFO'] = GenoINFO_maker(res_vireo['GT_prob'],
+            cell_dat['AD'] * res_vireo['ID_prob'],
             cell_dat['DP'] * res_vireo['ID_prob'])
         write_VCF(out_dir + "/GT_donors.vireo.vcf.gz", donor_vcf_out)
-    
+
     run_time = time.time() - START_TIME
-    print("[vireo] All done: %d min %.1f sec" %(int(run_time / 60), 
+    print("[vireo] All done: %d min %.1f sec" %(int(run_time / 60),
                                                     run_time % 60))
     print()
-    
-        
+
+
 if __name__ == "__main__":
     main()

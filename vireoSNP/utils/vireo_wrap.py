@@ -9,14 +9,14 @@ from .vireo_base import optimal_match, donor_select
 from .vireo_model import Vireo
 
 
-def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20, 
+def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
     random_seed=None, check_doublet=True, max_iter_init=20, delay_fit_theta=3,
     n_extra_donor=0, extra_donor_mode="distance", **kwargs):
     """
     A wrap function to run vireo with multiple initializations
     """
     if type(DP) is np.ndarray and np.mean(DP > 0) < 0.3:
-        print("Warning: input matrices is %.1f%% sparse, " 
+        print("Warning: input matrices is %.1f%% sparse, "
                 %(100 - np.mean(DP > 0) * 100) +
                 "change to scipy.sparse.csc_matrix" )
         AD = csc_matrix(AD)
@@ -25,7 +25,7 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
     if learn_GT == False and n_extra_donor > 0:
         print("Searching from extra donors only works with learn_GT")
         n_extra_donor = 0
-        
+
     # note learn_GT is false for mode 2 and 5 only (set before)
     if n_donor is None:
         if GT_prior is None:
@@ -52,8 +52,8 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
 
     _models_all = []
     for im in range(n_init):
-        _modelCA = Vireo(n_var=AD.shape[0], n_cell=AD.shape[1], 
-                         n_donor=n_donor_use, learn_GT=learn_GT, 
+        _modelCA = Vireo(n_var=AD.shape[0], n_cell=AD.shape[1],
+                         n_donor=n_donor_use, learn_GT=learn_GT,
                          GT_prob_init=GT_prior_use, **kwargs)
         _modelCA.set_prior(GT_prior=GT_prior_use)
         _models_all.append(_modelCA)
@@ -61,7 +61,7 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
     ## Fitting the models
     for im in range(n_init):
         # _models_all[im].fit(AD, DP, min_iter=20, verbose=False)
-        _models_all[im].fit(AD, DP, min_iter=5, max_iter=max_iter_init, 
+        _models_all[im].fit(AD, DP, min_iter=5, max_iter=max_iter_init,
             delay_fit_theta=delay_fit_theta, verbose=False)
 
     ## select the model with best initialization
@@ -71,18 +71,18 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
     if n_extra_donor == 0:
         modelCA.fit(AD, DP, min_iter=5, verbose=False)
     else:
-        _ID_prob = donor_select(modelCA.GT_prob, modelCA.ID_prob, n_donor, 
+        _ID_prob = donor_select(modelCA.GT_prob, modelCA.ID_prob, n_donor,
                                 mode=extra_donor_mode)
-        modelCA = Vireo(n_var=AD.shape[0], n_cell=AD.shape[1], 
-                        n_donor=n_donor, learn_GT=learn_GT, 
+        modelCA = Vireo(n_var=AD.shape[0], n_cell=AD.shape[1],
+                        n_donor=n_donor, learn_GT=learn_GT,
                         GT_prob_init=GT_prior_use, ID_prob_init=_ID_prob,
-                        beta_mu_init=modelCA.beta_mu, 
+                        beta_mu_init=modelCA.beta_mu,
                         beta_sum_init=modelCA.beta_sum, **kwargs)
         modelCA.set_prior(GT_prior=GT_prior_use)
-        modelCA.fit(AD, DP, min_iter=5, delay_fit_theta=delay_fit_theta, 
+        modelCA.fit(AD, DP, min_iter=5, delay_fit_theta=delay_fit_theta,
             verbose=False)
 
-    print("[vireo] lower bound ranges [%.1f, %.1f, %.1f]" 
+    print("[vireo] lower bound ranges [%.1f, %.1f, %.1f]"
           %(np.min(elbo_all), np.median(elbo_all), np.max(elbo_all)))
 
     ## Run Vireo again with updateing genotype
@@ -91,8 +91,8 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
         _donor_idx = np.argsort(_donor_cnt)[::-1]
         GT_prior_use = GT_prior[:, _donor_idx[:n_donor], :]
 
-        modelCA = Vireo(n_var=AD.shape[0], n_cell=AD.shape[1], 
-                        n_donor=n_donor, learn_GT=False, 
+        modelCA = Vireo(n_var=AD.shape[0], n_cell=AD.shape[1],
+                        n_donor=n_donor, learn_GT=False,
                         GT_prob_init=GT_prior_use, **kwargs)
         modelCA.fit(AD, DP, min_iter=20, verbose=False)
 
@@ -104,15 +104,15 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
         GT_prior_use = GT_prior_use[:, _idx_order, :]
         ID_prob_use = modelCA.ID_prob[:, _idx_order]
 
-        modelCA = Vireo(n_var=AD.shape[0], n_cell=AD.shape[1], 
+        modelCA = Vireo(n_var=AD.shape[0], n_cell=AD.shape[1],
                         n_donor=n_donor, learn_GT=learn_GT,
                         ID_prob_init=ID_prob_use,
-                        beta_mu_init=modelCA.beta_mu, 
+                        beta_mu_init=modelCA.beta_mu,
                         beta_sum_init=modelCA.beta_sum,
                         GT_prob_init=GT_prior_use, **kwargs)
         modelCA.set_prior(GT_prior = GT_prior_use)
         modelCA.fit(AD, DP, min_iter=20, verbose=False)
-    
+
     ## print the beta parameters
     print("[vireo] allelic rate mean and concentrations:")
     print(np.round(modelCA.beta_mu, 3))
@@ -123,16 +123,16 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
     _donor_cnt = np.sum(modelCA.ID_prob, axis=0)
     print("\t".join(["donor%d" %x for x in range(len(_donor_cnt))]))
     print("\t".join(["%.0f" %x for x in _donor_cnt]))
-    
-    
+
+
     ## Predict doublets
     if check_doublet:
         doublet_prob, ID_prob = modelCA.predict_doublet(AD, DP)
     else:
         ID_prob = modelCA.ID_prob
-        doublet_prob = np.zeros((AD.shape[1], AD.shape[1] * (AD.shape[1] - 1) / 2))
+        doublet_prob = np.zeros((AD.shape[1], int(n_donor * (n_donor - 1) / 2)))
 
-    theta_shapes = np.append(modelCA.beta_mu * modelCA.beta_sum, 
+    theta_shapes = np.append(modelCA.beta_mu * modelCA.beta_sum,
                              (1 - modelCA.beta_mu) * modelCA.beta_sum, axis=0)
     RV = {}
     RV['ID_prob'] = ID_prob
