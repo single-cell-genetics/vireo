@@ -128,6 +128,8 @@ def main():
     ## subset input cell data if necessary
     if options.cell_range is not None:
         cellRange = options.cell_range.split("-")
+        cellRange[0] = int(cellRange[0])
+        cellRange[1] = int(cellRange[1])
         cell_dat['AD'] = cell_dat['AD'][:,cellRange[0]:cellRange[1]]
         cell_dat['DP'] = cell_dat['DP'][:,cellRange[0]:cellRange[1]]
         cell_dat['samples'] = cell_dat['samples'][cellRange[0]:cellRange[1]]
