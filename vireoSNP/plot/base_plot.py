@@ -103,19 +103,76 @@ def minicode_plot(barcode_set, var_ids=None, sample_ids=None,
 
     return im
 
-def anno_heat(X, anno, **kwargs):
-    import seaborn as sns
-    idx = np.argsort(np.dot(X, 2**np.arange(X.shape[1])) + 
-                     anno * 2**X.shape[1])
-    g = sns.clustermap(X[idx], cmap="GnBu", yticklabels=False,
-                       col_cluster=False, row_cluster=False,
-                       row_colors=WeiZhu_colors[anno][idx], **kwargs)
+
+def anno_heat(X, row_anno=None, col_anno=None,
+              row_order_ids=None, col_order_ids=None, 
+              xticklabels=False, yticklabels=False,
+              row_cluster=False, col_cluster=False,
+              **kwargs):
+    """
+    Heatmap with column or row annotations. Based on seaborn.clustermap()
+    Row or column will be ordered by the annotation group.
     
-    for label in np.unique(anno):
-        g.ax_col_dendrogram.bar(0, 0, color=WeiZhu_colors[label],
-                                label=label, linewidth=0)
-    g.ax_col_dendrogram.legend(loc="center", ncol=6, title="True clone")
-    g.cax.set_position([.95, .2, .03, .45])
+    Note, haven't tested if input both row_anno and col_anno.
+    """
+    
+    import seaborn as sns
+    
+    # prepare row annotation
+    if row_anno is not None:
+        if row_order_ids is None:
+            row_order_ids = list(np.unique(row_anno))
+        else:
+            row_order_ids = [x for x in row_order_ids]
+        row_num = np.array([row_order_ids.index(x) for x in row_anno])
+
+        dot_row = np.array(np.nansum(X, axis=1)).reshape(-1)
+        idx_row = np.argsort(row_num * 2**X.shape[1])# + dot_row / dot_row.max())
+
+        row_colors = WeiZhu_colors[row_num][idx_row]
+    else:
+        row_colors = None
+        row_order_ids = []
+        idx_row = range(X.shape[0])
+        
+    # prepare col annotation
+    if col_anno is not None:
+        if col_order_ids is None:
+            col_order_ids = list(np.unique(col_order_ids))
+        else:
+            col_order_ids = [x for x in col_order_ids]
+        col_num = np.array([col_order_ids.index(x) for x in col_anno])
+
+        dot_col = np.array(np.nansum(X, axis=0)).reshape(-1)
+        idx_col = np.argsort(col_num * 2**X.shape[0])# + dot_row / dot_row.max())
+        
+        col_colors = WeiZhu_colors[col_num][idx_col]
+    else:
+        col_colors = None
+        col_order_ids = []
+        idx_col = range(X.shape[1])
+        
+    ## plot with seaborn clustermap
+    g = sns.clustermap(X[idx_row, :][:, idx_col], 
+                       row_colors=row_colors, col_colors=col_colors,
+                       col_cluster=col_cluster, row_cluster=row_cluster,
+                       xticklabels=xticklabels, yticklabels=yticklabels,
+                       **kwargs)
+    
+    if row_anno is not None:
+        for i in range(len(row_order_ids)):
+            g.ax_row_dendrogram.bar(0, 0, color=WeiZhu_colors[i],
+                                    label=row_order_ids[i], linewidth=0)
+        g.ax_row_dendrogram.legend(loc="center", ncol=1, title="")
+        
+    if col_anno is not None:
+        for i in range(len(col_order_ids)):
+            g.ax_col_dendrogram.bar(0, 0, color=WeiZhu_colors[i],
+                                    label=col_order_ids[i], linewidth=0)
+        g.ax_col_dendrogram.legend(loc="center", ncol=6, title="")
+    
+    g.cax.set_position([1.01, .2, .03, .45])
+    
     return g
 
 # def ppca_plot(AD, DP):
