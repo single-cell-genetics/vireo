@@ -53,11 +53,17 @@ def loglik_amplify(X, axis=-1):
     return X - X_max
 
 
-def beta_entropy(X, X_prior=None):
+def beta_entropy(X, X_prior=None, axis=None):
     """
     Get the entropy for beta distributions. If X_prior is not None, return the
     Kullback-Leibler divergence
     See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.entropy.html
+    https://en.wikipedia.org/wiki/Beta_distribution#Quantities_of_information_(entropy)
+
+    Parameters
+    ----------
+    X, X_prior: 
+        numpy.array with shape: (N, 2)
 
     Example
     -------
@@ -66,21 +72,38 @@ def beta_entropy(X, X_prior=None):
     beta_entropy(theta_shapes2)
     beta_entropy(theta_shapes2, theta_shapes1)
     """
-    RV1 = 0
+    def _beta_cross_entropy(Xp, Xq):
+        """return cross entropy -E_p[log q] for beta distribution
+        For entropy, use as _beta_cross_entropy(X, X)
+        """
+        return (
+            betaln(Xq[:, 0], Xq[:, 1]) - 
+            (Xq[:, 0] - 1) * digamma(Xp[:, 0]) - 
+            (Xq[:, 1] - 1) * digamma(Xp[:, 1]) +
+            (Xq.sum(axis=1) - 2) * digamma(Xp.sum(axis=1))
+            )
+
+    # check shape
+    if len(X.shape) == 1:
+        if X.shape[0] == 2:
+            X = X.reshape(-1, 2)
+        else:
+            print("Error: unsupported shape. Make sure it's (N, 2)")
+
+    if X_prior is not None and len(X.shape) == 1:
+        if X_prior.shape[0] == 2:
+            X_prior = X_prior.reshape(-1, 2)
+        else:
+            print("Error: unsupported shape. Make sure it's (N, 2)")
+
     if X_prior is None:
-        X_prior = X.copy()
+        # entropy
+        RV_mat = _beta_cross_entropy(X, X)
     else:
-        RV1 = (- betaln(X[:, 0], X[:, 1]) + 
-               (X[:, 0] - 1) * digamma(X[:, 0]) + 
-               (X[:, 1] - 1) * digamma(X[:, 1]) - 
-               (X.sum(axis=1) - 2) * digamma(X.sum(axis=1)))
+        # KL divergence
+        RV_mat = _beta_cross_entropy(X, X_prior) - _beta_cross_entropy(X, X)
 
-    RV2 = (- betaln(X_prior[:, 0], X_prior[:, 1]) + 
-           (X_prior[:, 0] - 1) * digamma(X[:, 0]) + 
-           (X_prior[:, 1] - 1) * digamma(X[:, 1]) - 
-           (X_prior.sum(axis=1) - 2) * digamma(X.sum(axis=1)))
-
-    return np.sum(RV1) - np.sum(RV2)
+    return np.sum(RV_mat, axis=axis)
 
 
 def match(ref_ids, new_ids, uniq_ref_only=True):

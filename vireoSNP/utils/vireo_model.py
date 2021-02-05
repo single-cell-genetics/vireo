@@ -226,9 +226,9 @@ class Vireo():
                 logLik_ID += (S1 + S2 - SS)
 
         LB_p = np.sum(logLik_ID * self.ID_prob)
-        KL_ID = -np.sum(entropy(self.ID_prob, self.ID_prior, axis=-1))
-        KL_GT = -np.sum(entropy(self.GT_prob, self.GT_prior, axis=-1))
-        KL_theta = -beta_entropy(
+        KL_ID = np.sum(entropy(self.ID_prob, self.ID_prior, axis=-1))
+        KL_GT = np.sum(entropy(self.GT_prob, self.GT_prior, axis=-1))
+        KL_theta = beta_entropy(
             np.append(
                 np.expand_dims(self.theta_s1, 1), 
                 np.expand_dims(self.theta_s2, 1), axis = 1),
@@ -241,7 +241,7 @@ class Vireo():
 
 
     def fit(self, AD, DP, max_iter=200, min_iter=5, epsilon_conv=1e-2,
-        delay_fit_theta=0, verbose=False):
+        delay_fit_theta=0, verbose=True):
         """Fit Vireo model with coordinate ascent
 
         Parameters
