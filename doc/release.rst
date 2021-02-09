@@ -2,6 +2,19 @@
 History
 =======
 
+Release v0.5.0 (09/02/2021)
+===========================
+* support support numpy.ndarray and automatically change to sparse matrix
+* fix the sign of KL
+* fix a minor bug on --noDoublet setting
+* add --cellRange to subset the input cells for less memory
+* update anno_heat() plotting
+* add get_confusion() for results comparison and plotting
+
+Release v0.4.2 (14/11/2020)
+===========================
+* fix the donor names when N < donors_in_GT
+* change the suggestion from cellSNP python to C version (cellsnp-lite)
 
 Release v0.4.1 (18/05/2020)
 ===========================
