@@ -13,6 +13,7 @@ from .utils.vireo_base import match, optimal_match
 from .utils.vireo_wrap import vireo_wrap
 from .utils.vireo_model import Vireo
 from .utils.vireo_bulk import VireoBulk, LikRatio_test
+from .utils.bmm_model import BinomMixtureVB
 
 __all__ = [
     "__version__",
