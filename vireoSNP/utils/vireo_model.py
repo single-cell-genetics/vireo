@@ -3,12 +3,10 @@ import numpy as np
 from scipy.stats import entropy
 from scipy.sparse import csc_matrix
 from scipy.special import logsumexp, digamma, betaln
-from .vireo_base import normalize, loglik_amplify, beta_entropy, get_binom_coeff
+from .vireo_base import normalize, loglik_amplify, beta_entropy
+from .vireo_base import get_binom_coeff, logbincoeff
 
 __docformat__ = "restructuredtext en"
-
-__all__ = ['Vireo', 'add_doublet_theta', 'add_doublet_GT']
-
 
 class Vireo():
     """Viroe model: Variational Inference for reconstruction of ensemble origin
@@ -269,7 +267,8 @@ class Vireo():
             AD = csc_matrix(AD)
             DP = csc_matrix(DP)
 
-        _binom_coeff = np.sum(get_binom_coeff(AD, DP))
+        # _binom_coeff_log = np.sum(logbincoeff(DP, AD, is_sparse=True))
+        _binom_coeff_log = np.sum(get_binom_coeff(AD, DP))
         ELBO = np.zeros(max_iter)
         for it in range(max_iter):
             if self.learn_theta and it >= delay_fit_theta:
@@ -278,7 +277,7 @@ class Vireo():
                 self.update_GT_prob(AD, DP)
 
             _logLik_ID = self.update_ID_prob(AD, DP)
-            ELBO[it] = self.get_ELBO(_logLik_ID) + _binom_coeff
+            ELBO[it] = self.get_ELBO(_logLik_ID) + _binom_coeff_log
 
             if it > min_iter:
                 if ELBO[it] < ELBO[it - 1]:
@@ -290,131 +289,3 @@ class Vireo():
                 elif ELBO[it] - ELBO[it - 1] < epsilon_conv:
                     break
         self.ELBO_ = np.append(self.ELBO_, ELBO[:it])
-
-
-    def predict_doublet(self, AD, DP, update_GT=True, update_ID=True, 
-        doublet_rate_prior=None):
-        """Predict doublet with fitted Vireo model
-
-        Parameters
-        ----------
-        AD : scipy.sparse.csc_matrix (n_var, n_cell)
-            Sparse count matrix for alternative allele
-        DP : scipy.sparse.csc_matrix (n_var, n_cell)
-            Sparse count matrix for depths, alternative + refeerence alleles
-        update_GT : bool
-            Whether updating GT_prob after removing doublet_prob
-        update_GT : bool
-            Whether updating ID_prob by removing doublet_prob
-        doublet_rate_prior : float
-            Prior value of doublet rate
-
-        Returns
-        -------
-        A tuple of two numpy arrays (doublet_prob, ID_prob)
-
-        doublet_prob : numpy array (n_cell, n_donor * (n_donor - 1) / 2)
-            Assignment probability of a cells to any doublet (donor pair)
-        ID_prob : numpy array (n_cell, n_donor)
-            updated ID_prob by removing doublet_prob
-        """
-        GT_both = add_doublet_GT(self.GT_prob)
-        beta_mu_both, beta_sum_both = add_doublet_theta(self.beta_mu, 
-                                                        self.beta_sum)
-
-        n_doublet_pair = GT_both.shape[1] - self.GT_prob.shape[1]
-        if doublet_rate_prior is None:
-            doublet_rate_prior = min(0.5, AD.shape[1] / 100000)
-            
-        ID_prior_both = np.append(
-            self.ID_prior * (1 - doublet_rate_prior), 
-            np.ones((self.n_cell, n_doublet_pair)) / n_doublet_pair * 
-            doublet_rate_prior, axis=1)
-
-        # Calculate assignment probability (same as update_ID_prob())
-        BD = DP - AD
-        logLik_ID = np.zeros((AD.shape[1], GT_both.shape[1]))
-        _digamma1 = np.expand_dims(digamma(beta_sum_both * beta_mu_both), 1)
-        _digamma2 = np.expand_dims(digamma(beta_sum_both * (1 - beta_mu_both)), 1)
-        _digammas = np.expand_dims(digamma(beta_sum_both), 1)
-        for ig in range(GT_both.shape[2]):
-            S1 = AD.T @ (GT_both[:, :, ig] * _digamma1[:, :, ig])
-            S2 = BD.T @ (GT_both[:, :, ig] * _digamma2[:, :, ig])
-            SS = DP.T @ (GT_both[:, :, ig] * _digammas[:, :, ig])
-            logLik_ID += (S1 + S2 - SS)
-
-        ID_prob_both = normalize(np.exp(loglik_amplify(
-            logLik_ID + np.log(ID_prior_both))))
-
-        if update_ID:
-            self.ID_prob = ID_prob_both[:, :self.n_donor]
-
-        if update_GT:
-            if update_ID:
-                self.update_GT_prob(AD, DP)
-            else:
-                print("For update_GT, please turn on update_ID.")
-        
-        return ID_prob_both[:, self.n_donor:], ID_prob_both[:, :self.n_donor]
-
-
-    def predit_ambient(self):
-        """Predict fraction of ambient RNA contaimination.
-        
-        Not implemented yet.
-        """
-        print("Not implemented yet.")
-
-
-def add_doublet_theta(beta_mu, beta_sum):
-    """
-    calculate theta for doublet genotype: GT=0&1, GT=0&2, and GT=1&2 by
-    averaging thire beta paramters
-    
-    Example
-    -------
-    add_doublet_theta(np.array([[0.01, 0.5, 0.99]]), np.array([[30, 6, 30]]))
-    """
-    # TODO: support reduced GT for relatives
-    combn_iter = itertools.combinations(range(beta_mu.shape[1]), 2)
-    db_idx = np.array([x for x in combn_iter])
-
-    beta_mu_db = (beta_mu[:, db_idx[:, 0]] + beta_mu[:, db_idx[:, 1]]) / 2.0
-    beta_sum_db = np.sqrt(beta_sum[:, db_idx[:, 0]] * beta_sum[:, db_idx[:, 1]])
-
-    return (np.append(beta_mu, beta_mu_db, axis=-1), 
-            np.append(beta_sum, beta_sum_db, axis=-1))
-
-
-def add_doublet_GT(GT_prob):
-    """
-    Add doublet genotype by summarizing their probability:
-    New GT has five categories: 0, 1, 2, 1.5, 2.5
-    TODO: New GT has six categories: 0, 1, 2, 0_1, 0_2, 1_2
-    """
-    combn_iter = itertools.combinations(range(GT_prob.shape[2]), 2)
-    gt_idx = np.array([x for x in combn_iter]) # GT combination
-    g_idx1 = gt_idx[:, 0]
-    g_idx2 = gt_idx[:, 1]
-
-    combn_iter = itertools.combinations(range(GT_prob.shape[1]), 2)
-    sp_idx = np.array([x for x in combn_iter]) # sample combination
-    s_idx1 = sp_idx[:, 0]
-    s_idx2 = sp_idx[:, 1]
-    
-    ## GT_prob has three genotypes: 0, 1, 2;
-    n_gt = GT_prob.shape[2]
-    GT_prob2 = np.zeros((GT_prob.shape[0], sp_idx.shape[0],
-                         n_gt + gt_idx.shape[0]))
-
-    GT_prob2[:, :, :n_gt] = (GT_prob[:, s_idx1, :] * 
-                             GT_prob[:, s_idx2, :])
-    GT_prob2[:, :, n_gt:] = (GT_prob[:, s_idx1, :][:, :, g_idx1] * 
-                             GT_prob[:, s_idx2, :][:, :, g_idx2] +
-                             GT_prob[:, s_idx1, :][:, :, g_idx2] * 
-                             GT_prob[:, s_idx2, :][:, :, g_idx1])
-    
-    GT_prob2 = normalize(GT_prob2, axis=2)
-    GT_prob1 = np.append(GT_prob, 
-        np.zeros((GT_prob.shape[0], GT_prob.shape[1], gt_idx.shape[0])), axis=2)
-    return np.append(GT_prob1, GT_prob2, axis=1)

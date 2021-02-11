@@ -163,6 +163,15 @@ def write_donor_id(out_dir, donor_names, cell_names, n_vars, res_vireo):
         fid.writelines("\t".join([cell_names[i]] + line) + "\n")
     fid.close()
 
+    ## save ambient RNA file
+    if res_vireo['ambient_Psi'] is not None:
+        fid = open(out_dir + "/prop_ambient.tsv", "w")
+        fid.writelines("\t".join(["cell"] + donor_names) + "\n")
+        for i in range(len(cell_names)):
+            line = ["%.4e" %x for x in res_vireo['ambient_Psi'][i, :]]
+            fid.writelines("\t".join([cell_names[i]] + line) + "\n")
+        fid.close()
+
     bashCommand = "gzip -f %s %s" %(out_dir + "/prob_singlet.tsv", 
         out_dir + "/prob_doublet.tsv")
     pro = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)

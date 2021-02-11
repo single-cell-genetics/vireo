@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import entropy
 from scipy.optimize import linear_sum_assignment
-from scipy.special import logsumexp, digamma, betaln, binom
+from scipy.special import logsumexp, digamma, betaln, binom, gammaln
 
 
 def get_binom_coeff(AD, DP, max_val=700, is_log=True):
@@ -9,6 +9,8 @@ def get_binom_coeff(AD, DP, max_val=700, is_log=True):
     """
     # Since binom can't give log value, the maximum value in 64bit is 
     # around e**700, close to binom(1000, 500)
+    
+    # print("Warning: this function is deprecated, please use logbincoeff.")
     idx = DP > 0
     _AD = AD[idx].astype(np.int64)
     _DP = DP[idx].astype(np.int64)
@@ -18,6 +20,25 @@ def get_binom_coeff(AD, DP, max_val=700, is_log=True):
     binom_coeff = binom_coeff.astype(np.float32)
         
     return binom_coeff
+
+
+def logbincoeff(n, k, is_sparse=False):
+    """
+    Ramanujan's approximation of log [n! / (k! (n-k)!)]
+    This is mainly for convinience with pen. Please use betaln or gammaln
+    """
+    if is_sparse:
+        RV_sparse = n.copy() * 0
+        idx = (k > 0).multiply(k < n)
+        n = np.array(n[idx]).reshape(-1)
+        k = np.array(k[idx]).reshape(-1)
+        
+    RV = gammaln(n + 1) - gammaln(k + 1) - gammaln(n - k + 1)
+    
+    if is_sparse:
+        RV_sparse[idx] += RV
+        RV = RV_sparse
+    return RV
 
 
 def normalize(X, axis=-1):

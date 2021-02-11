@@ -76,8 +76,10 @@ def main():
         help="Seed for random initialization [default: %default]")
     group1.add_option("--cellRange", type="str", dest="cell_range", default=None,
         help="Range of cells to process, eg. 0-10000 [default: all]")
-    # group1.add_option("--nproc", "-p", type="int", dest="nproc", default=1,
-    #     help="Number of subprocesses [default: %default]")
+    group1.add_option("--callAmbientRNAs", dest="check_ambient", default=False,
+        action="store_true", help="If use, detect ambient RNAs.")
+    group1.add_option("--nproc", "-p", type="int", dest="nproc", default=1,
+        help="N subprocesses for predicting ambient RNAs [default: %default]")
 
     parser.add_option_group(group0)
     parser.add_option_group(group1)
@@ -196,7 +198,8 @@ def main():
         GT_prior=donor_GPb, learn_GT=learn_GT, n_init=n_init,
         n_extra_donor=n_extra_donor, extra_donor_mode=options.extra_donor_mode,
         check_doublet=check_doublet, random_seed=options.rand_seed,
-        ASE_mode=options.ASE_mode)
+        ASE_mode=options.ASE_mode, check_ambient=options.check_ambient, 
+        nproc=options.nproc)
 
     if (n_donor is not None and
         donor_GPb is not None and n_donor < donor_GPb.shape[1]):

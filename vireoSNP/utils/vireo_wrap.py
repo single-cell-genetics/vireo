@@ -7,11 +7,13 @@ import numpy as np
 from scipy.sparse import csc_matrix
 from .vireo_base import optimal_match, donor_select
 from .vireo_model import Vireo
+from .vireo_doublet import predict_doublet, predit_ambient
 
 
 def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
     random_seed=None, check_doublet=True, max_iter_init=20, delay_fit_theta=3,
-    n_extra_donor=0, extra_donor_mode="distance", **kwargs):
+    n_extra_donor=0, extra_donor_mode="distance", 
+    check_ambient=False, nproc=4, **kwargs):
     """
     A wrap function to run vireo with multiple initializations
     """
@@ -127,13 +129,20 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
 
     ## Predict doublets
     if check_doublet:
-        doublet_prob, ID_prob = modelCA.predict_doublet(AD, DP)
+        doublet_prob, ID_prob = predict_doublet(modelCA, AD, DP)
     else:
         ID_prob = modelCA.ID_prob
         doublet_prob = np.zeros((AD.shape[1], int(n_donor * (n_donor - 1) / 2)))
 
     theta_shapes = np.append(modelCA.beta_mu * modelCA.beta_sum,
                              (1 - modelCA.beta_mu) * modelCA.beta_sum, axis=0)
+
+    ## Predict ambient RNAs
+    if check_ambient:
+        ambient_Psi = predit_ambient(modelCA, AD, DP, nproc=nproc)
+    else:
+        ambient_Psi = None
+    
     RV = {}
     RV['ID_prob'] = ID_prob
     RV['GT_prob'] = modelCA.GT_prob
@@ -141,6 +150,7 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
     RV['theta_shapes'] = theta_shapes
     RV['theta_mean'] = modelCA.beta_mu
     RV['theta_sum'] = modelCA.beta_sum
+    RV['ambient_Psi'] = ambient_Psi
     RV['LB_list'] = elbo_all
     RV['LB_doublet'] = modelCA.ELBO_[-1]
     return RV

@@ -2,6 +2,9 @@
 History
 =======
 
+Release v0.6.0 (xxx)
+* support detection of ambient RNAs, alternative way for doublet detection
+
 Release v0.5.0 (09/02/2021)
 ===========================
 * support support numpy.ndarray and automatically change to sparse matrix
