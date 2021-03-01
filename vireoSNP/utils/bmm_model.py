@@ -92,7 +92,7 @@ class BinomMixtureVB():
         if beta_mu_prior is None:
             beta_mu_prior = np.ones((self.n_var, self.n_donor)) * 0.5
         if beta_sum_prior is None:
-            beta_sum_prior = np.ones(beta_mu_prior.shape)
+            beta_sum_prior = np.ones(beta_mu_prior.shape) * 2.0
 
         self.theta_s1_prior = beta_mu_prior * beta_sum_prior
         self.theta_s2_prior = (1 - beta_mu_prior) * beta_sum_prior
@@ -175,8 +175,8 @@ class BinomMixtureVB():
         return LB_p - KL_ID - KL_theta
 
 
-    def _fit_BV(self, AD, DP, max_iter=200, min_iter=5, epsilon_conv=1e-2,
-        n_init=10, verbose=True):
+    def _fit_BV(self, AD, DP, max_iter=200, min_iter=20, epsilon_conv=1e-2,
+        verbose=True):
         """Fit Vireo model with coordinate ascent
         """
         ELBO = np.zeros(max_iter)
@@ -198,10 +198,11 @@ class BinomMixtureVB():
                 elif ELBO[it] - ELBO[it - 1] < epsilon_conv:
                     break
 
-        self.ELBO_iters = ELBO[:it]
+        self.ELBO_iters = np.append(self.ELBO_iters, ELBO[:it])
 
 
-    def fit(self, AD, DP, n_init=10, **kwargs):
+    def fit(self, AD, DP, n_init=10, max_iter=200, max_iter_pre=100, 
+        random_seed=None, **kwargs):
         """Fit VB with multiple initializations
 
         Parameters
@@ -213,14 +214,21 @@ class BinomMixtureVB():
         n_inits : int
             Number of random initialisations to use
         max_iter : int
-            Maximum number of iterations for _fit_BV()
+            Maximum number of iterations for _fit_BV() in best initial
+        max_iter_pre : int
+            Maximum number of iterations for _fit_BV() in multiple initials
         min_iter :
             Minimum number of iterations for _fit_BV()
         epsilon_conv : float
             Threshold for detecting convergence for _fit_BV()
         verbose : bool
             Whether print out log info for _fit_BV()
+        random_seed : None or int
+            Random seed in numpy.random for multiple initializations
         """
+        if random_seed is not None:
+            np.random.seed(random_seed)
+            
         if type(DP) is np.ndarray and np.mean(DP > 0) < 0.3:
             print("Warning: input matrices is %.1f%% sparse, " 
                   %(100 - np.mean(DP > 0) * 100) +
@@ -235,11 +243,11 @@ class BinomMixtureVB():
             self.reset_initial(
                 self.beta_mu_init, self.beta_sum_init, self.ID_prob_init
             )
-            self._fit_BV(AD, DP, **kwargs)
+            self._fit_BV(AD, DP, max_iter=max_iter_pre, **kwargs)
             self.ELBO_inits.append(self.ELBO_iters[-1])
             
             ## first or better initialization
-            if i == 0 or self.ELBO_iters[-1] > np.max(self.ELBO_inits):
+            if i == 0 or (self.ELBO_iters[-1] > np.max(self.ELBO_inits[:-1])):
                 _ID_prob_best = self.ID_prob + 0
                 _beta_mu_best = self.beta_mu + 0
                 _beta_sum_best = self.beta_sum + 0
@@ -248,7 +256,7 @@ class BinomMixtureVB():
         ## Re-fit with best parameters
         self.reset_initial(_beta_mu_best, _beta_sum_best, _ID_prob_best)
         self.ELBO_iters = _ELBO_iters_best
-        # self._fit_BV(AD, DP, **kwargs)
+        self._fit_BV(AD, DP, max_iter=max_iter, **kwargs)
 
         ## add binomial coefficient constants
         self.ELBO_iters = self.ELBO_iters + _binom_coeff
