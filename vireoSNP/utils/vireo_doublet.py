@@ -131,7 +131,7 @@ def add_doublet_GT(GT_prob):
 
 
 def _fit_EM_ambient(AD, DP, theta_mat, n_donor, 
-    max_iter=200, min_iter=5, epsilon_conv=1e-3, verbose=False):
+    max_iter=200, min_iter=5, epsilon_conv=1e-3, Hessian=True, verbose=False):
     """Estimate ambient RNA abundance by EM algorithm
     """
     BD = DP - AD
@@ -163,7 +163,19 @@ def _fit_EM_ambient(AD, DP, theta_mat, n_donor,
             elif logLik[it] - logLik[it - 1] < epsilon_conv:
                 break
     logLik_RV = logLik[:it]
-    return psi
+
+    # caluclate the Cramér–Rao bound of variance
+    var_CRbound = np.array([ None ] * len(psi))
+    if Hessian:
+        theta_vct = np.dot(theta_mat, psi).reshape(-1, 1)
+        Fisher_info = np.sum(
+            (theta_mat / theta_vct)**2 * AD.reshape(-1, 1) +
+            (theta_mat / (1 - theta_vct))**2 * BD.reshape(-1, 1),
+            axis = 0
+        )
+        var_CRbound = 1.0 / Fisher_info
+
+    return psi, var_CRbound, logLik_RV[-1]
     
 
 def predit_ambient(vobj, AD, DP, nproc=10):
@@ -187,19 +199,25 @@ def predit_ambient(vobj, AD, DP, nproc=10):
             (_ad, _dp, theta_mat, vobj.n_donor), callback = None))
         pool.close()
         pool.join()
-        Psi_mat = np.array([res.get() for res in result])
+        res_list = [res.get() for res in result]
+
+        Psi_mat = np.array([res[0] for res in res_list])
+        Psi_var = np.array([res[1] for res in res_list])
+        Psi_logLik = np.array([res[2] for res in res_list])
+        
     else:
         Psi_mat = np.zeros((AD.shape[1], vobj.n_donor))
+        Psi_var = np.zeros((AD.shape[1], vobj.n_donor))
+        Psi_logLik = np.zeros(AD.shape[1])
         for i in range(AD.shape[1]):
             _ad = AD[:, i].toarray().reshape(-1)
             _dp = DP[:, i].toarray().reshape(-1)
-            Psi_mat[i, :] = _fit_EM_ambient(
-                _ad, _dp, theta_mat, vobj.n_donor)
+            _res = _fit_EM_ambient(_ad, _dp, theta_mat, vobj.n_donor)
 
-        return Psi_mat
+            Psi_mat[i, :], Psi_var[i, :], Psi_logLik[i] = _fit_EM_ambient(
+                _ad, _dp, theta_mat, vobj.n_donor)
 
     stop = timeit.default_timer()
     print('Time: ', stop - start)
 
-    return Psi_mat
-
+    return Psi_mat, Psi_var, Psi_logLik

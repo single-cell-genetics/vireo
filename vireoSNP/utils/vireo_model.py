@@ -270,6 +270,7 @@ class Vireo():
         # _binom_coeff_log = np.sum(logbincoeff(DP, AD, is_sparse=True))
         _binom_coeff_log = np.sum(get_binom_coeff(AD, DP))
         ELBO = np.zeros(max_iter)
+        numerical_minimal = 1e-6
         for it in range(max_iter):
             if self.learn_theta and it >= delay_fit_theta:
                 self.update_theta_size(AD, DP)
@@ -280,7 +281,7 @@ class Vireo():
             ELBO[it] = self.get_ELBO(_logLik_ID) + _binom_coeff_log
 
             if it > min_iter:
-                if ELBO[it] < ELBO[it - 1]:
+                if ELBO[it] < ELBO[it - 1] - numerical_minimal:
                     if verbose:
                         print("Warning: Lower bound decreases!\n")
                 elif it == max_iter - 1:

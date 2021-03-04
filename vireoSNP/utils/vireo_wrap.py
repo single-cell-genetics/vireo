@@ -139,9 +139,12 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
 
     ## Predict ambient RNAs
     if check_ambient:
-        ambient_Psi = predit_ambient(modelCA, AD, DP, nproc=nproc)
+        from threadpoolctl import threadpool_limits
+        with threadpool_limits(limits=1, user_api='blas'):
+            ambient_Psi, Psi_var, Psi_logLik = predit_ambient(
+                modelCA, AD, DP, nproc=nproc)
     else:
-        ambient_Psi = None
+        ambient_Psi, Psi_var, Psi_logLik = None, None, None
     
     RV = {}
     RV['ID_prob'] = ID_prob
@@ -151,6 +154,8 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
     RV['theta_mean'] = modelCA.beta_mu
     RV['theta_sum'] = modelCA.beta_sum
     RV['ambient_Psi'] = ambient_Psi
+    RV['Psi_var'] = Psi_var
+    RV['Psi_logLik'] = Psi_logLik
     RV['LB_list'] = elbo_all
     RV['LB_doublet'] = modelCA.ELBO_[-1]
     return RV
