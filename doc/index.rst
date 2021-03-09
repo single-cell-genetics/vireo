@@ -26,10 +26,14 @@ mitochondral mutations.
 .. _manual: https://vireosnp.readthedocs.io/en/latest/manual.html
 
 
-Tutorials
-=========
+Notebooks for interactive analysis
+==================================
+Here are some notebooks for interactive analysis. Usually, you only need to use 
+the command line to perform donor deconvolution, but you may refer to some of 
+these notebooks for additional analysis.
+
 **donors**: `vireoSNP_donors.ipynb`_ gives example on donor deconvolution 
-manually
+manually. The `vireo` command line does this job automatically.
 
 **donors**: `donor_match.ipynb`_ gives example on aligning donors to other
 omics data or other batches
