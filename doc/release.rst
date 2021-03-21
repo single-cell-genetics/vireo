@@ -2,7 +2,16 @@
 History
 =======
 
-Release v0.6.0 (xxx)
+Release v0.5.4 (xxx)
+====================
+* introduce log likelihood ratio for detecting ambient RNAs
+* support ambient RNAs from a mixture of all donors or only two donors
+* introduce multiple processes for multiple initializations
+* introduce ELBO_gain for selecting variants
+* For donor_ids.tsv, the doublet_prob change from sum to max
+
+Release v0.5.3 (xxx)
+====================
 * support detection of ambient RNAs, alternative way for doublet detection
 
 Release v0.5.0 (09/02/2021)

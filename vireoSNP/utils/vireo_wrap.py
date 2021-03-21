@@ -4,10 +4,19 @@
 
 import sys
 import numpy as np
+import multiprocessing
 from scipy.sparse import csc_matrix
 from .vireo_base import optimal_match, donor_select
 from .vireo_model import Vireo
 from .vireo_doublet import predict_doublet, predit_ambient
+
+
+def _model_fit(_model, AD, DP, max_iter, delay_fit_theta):
+    """Temp function for model fitting with multiple processes
+    """
+    _model.fit(AD, DP, min_iter=5, max_iter=max_iter,
+        delay_fit_theta=delay_fit_theta, verbose=False)
+    return _model
 
 
 def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
@@ -52,6 +61,7 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
         GT_prior_use = GT_prior.copy()
         n_donor_use = GT_prior.shape[1]
 
+    ## Initialise models
     _models_all = []
     for im in range(n_init):
         _modelCA = Vireo(n_var=AD.shape[0], n_cell=AD.shape[1],
@@ -60,11 +70,21 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
         _modelCA.set_prior(GT_prior=GT_prior_use)
         _models_all.append(_modelCA)
 
-    ## Fitting the models
-    for im in range(n_init):
-        # _models_all[im].fit(AD, DP, min_iter=20, verbose=False)
-        _models_all[im].fit(AD, DP, min_iter=5, max_iter=max_iter_init,
-            delay_fit_theta=delay_fit_theta, verbose=False)
+    ## Fitting the models with single or multiple processes
+    if nproc > 1:
+        result = []
+        pool = multiprocessing.Pool(processes = nproc)
+        for im in range(n_init):
+            result.append(pool.apply_async(_model_fit,
+                (_models_all[im], AD, DP, max_iter_init, delay_fit_theta), 
+                callback = None))
+        pool.close()
+        pool.join()
+        _models_all = [res.get() for res in result]        
+    else:
+        for im in range(n_init):
+            _models_all[im].fit(AD, DP, min_iter=5, max_iter=max_iter_init,
+                delay_fit_theta=delay_fit_theta, verbose=False)
 
     ## select the model with best initialization
     elbo_all = np.array([x.ELBO_[-1] for x in _models_all])
@@ -141,10 +161,10 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
     if check_ambient:
         from threadpoolctl import threadpool_limits
         with threadpool_limits(limits=1, user_api='blas'):
-            ambient_Psi, Psi_var, Psi_logLik = predit_ambient(
+            ambient_Psi, Psi_var, Psi_logLik_ratio = predit_ambient(
                 modelCA, AD, DP, nproc=nproc)
     else:
-        ambient_Psi, Psi_var, Psi_logLik = None, None, None
+        ambient_Psi, Psi_var, Psi_logLik_ratio = None, None, None
     
     RV = {}
     RV['ID_prob'] = ID_prob
@@ -155,7 +175,7 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
     RV['theta_sum'] = modelCA.beta_sum
     RV['ambient_Psi'] = ambient_Psi
     RV['Psi_var'] = Psi_var
-    RV['Psi_logLik'] = Psi_logLik
+    RV['Psi_LLRatio'] = Psi_logLik_ratio
     RV['LB_list'] = elbo_all
     RV['LB_doublet'] = modelCA.ELBO_[-1]
     return RV

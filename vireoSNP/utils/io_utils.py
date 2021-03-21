@@ -105,7 +105,7 @@ def write_donor_id(out_dir, donor_names, cell_names, n_vars, res_vireo):
     ID_prob, doublet_prob = res_vireo['ID_prob'], res_vireo['doublet_prob']
 
     prob_max = np.max(ID_prob, axis=1)
-    prob_doublet_out = np.sum(doublet_prob, axis=1)
+    prob_doublet_out = np.max(doublet_prob, axis=1)
     donor_singlet = np.array(donor_names, "U100")[np.argmax(ID_prob, axis=1)]
 
     doublet_names = [",".join(x) for x in permutations(donor_names, 2)]
@@ -166,9 +166,10 @@ def write_donor_id(out_dir, donor_names, cell_names, n_vars, res_vireo):
     ## save ambient RNA file
     if res_vireo['ambient_Psi'] is not None:
         fid = open(out_dir + "/prop_ambient.tsv", "w")
-        fid.writelines("\t".join(["cell"] + donor_names) + "\n")
+        fid.writelines("\t".join(["cell"] + donor_names + ['logLik_ratio']) + "\n")
         for i in range(len(cell_names)):
             line = ["%.4e" %x for x in res_vireo['ambient_Psi'][i, :]]
+            line += ['%.2f' %res_vireo['Psi_LLRatio'][i]]
             fid.writelines("\t".join([cell_names[i]] + line) + "\n")
         fid.close()
 

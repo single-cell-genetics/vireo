@@ -130,19 +130,30 @@ def add_doublet_GT(GT_prob):
     return np.append(GT_prob1, GT_prob2, axis=1)
 
 
-def _fit_EM_ambient(AD, DP, theta_mat, n_donor, 
-    max_iter=200, min_iter=5, epsilon_conv=1e-3, Hessian=True, verbose=False):
+def _fit_EM_ambient(AD, DP, theta_mat, n_donor=None, max_iter=200, min_iter=20, 
+    epsilon_conv=1e-3, Hessian=True, verbose=False):
     """Estimate ambient RNA abundance by EM algorithm
     """
     BD = DP - AD
-    psi = np.random.dirichlet([1] * n_donor)
+    if n_donor is None:
+        n_donor = theta_mat.shape[1]
+
+    psi = np.random.dirichlet([1] * theta_mat.shape[1])
     logLik = np.zeros(max_iter)
     for it in range(max_iter):
+        # masking donors to restrict the number of donors in the mixture
+        if it < min_iter - 3:
+            mask_idx = []
+        else:
+            mask_idx = np.argsort(psi)[ : (theta_mat.shape[1] - n_donor)]
+        
         # E step: expectation of count assignment probability
         Z1 = theta_mat * np.expand_dims(psi, 0)
+        Z1[:, mask_idx] = 0
         Z1 = Z1 / np.sum(Z1, axis=1, keepdims=True)
         
         Z0 = (1 - theta_mat) * np.expand_dims(psi, 0)
+        Z0[:, mask_idx] = 0
         Z0 = Z0 / np.sum(Z0, axis=1, keepdims=True)
 
         # M step: maximize logLikehood over psi and theta
@@ -175,10 +186,25 @@ def _fit_EM_ambient(AD, DP, theta_mat, n_donor,
         )
         var_CRbound = 1.0 / Fisher_info
 
-    return psi, var_CRbound, logLik_RV[-1]
+    # calculate likelihood ratio
+    logLik_null = np.zeros(theta_mat.shape[1])
+    for i in range(theta_mat.shape[1]):
+        min_p = 0 # minimal proportion for other donors, e.g., 0.001
+        psi_null = np.ones(theta_mat.shape[1]) * min_p / (theta_mat.shape[1] - 1)
+        psi_null[np.argmax(psi)] = 1 - min_p
+
+        theta_null = np.dot(theta_mat, psi_null)
+        logLik_null[i] = np.sum(
+            AD * np.log(theta_null) + BD * np.log(1 - theta_null))
+    
+    logLik_ratio = logLik_RV[-1] - np.max(logLik_null)
+    # logLik_ratio = (
+    #     logLik_RV[-1] - logsumexp(logLik_null - np.log(theta_mat.shape[1])))
+
+    return psi, var_CRbound, logLik_ratio
     
 
-def predit_ambient(vobj, AD, DP, nproc=10):
+def predit_ambient(vobj, AD, DP, nproc=10, min_ELBO_gain=None):
     """Predict fraction of ambient RNA contaimination.
     Still under development
     """
@@ -186,17 +212,36 @@ def predit_ambient(vobj, AD, DP, nproc=10):
     import timeit
     start = timeit.default_timer()
 
-    # theta_mat = (AD @ vobj.ID_prob + 0.1) / (DP @ vobj.ID_prob + 0.2)
+    ## option 1: binomial
     theta_mat = np.tensordot(vobj.GT_prob, vobj.beta_mu[0, :], axes=(2, 0))
 
+    ## option 2: binomial per variants
+    # theta_mat = (AD @ vobj.ID_prob + 0.1) / (DP @ vobj.ID_prob + 0.2)
+    # theta_mat = betabinom.pmf(1, 1, _ss1, _ss2, loc=0)
+
+    ## Select donor informed variants
+    from .variant_select import variant_ELBO_gain
+    if min_ELBO_gain is None:
+        min_ELBO_gain = np.sqrt(AD.shape[1]) / 3.0
+
+    _ELBO_gain = variant_ELBO_gain(vobj.ID_prob, AD, DP)
+    _snp_idx = _ELBO_gain >= min_ELBO_gain
+    print("[vireo] %d out %d SNPs selected for ambient RNA detection: "
+          "ELBO_gain > %.1f" %(sum(_snp_idx), len(_snp_idx), min_ELBO_gain))
+    
+    theta_mat = theta_mat[_snp_idx, :]
+    AD = AD[_snp_idx, :]
+    DP = DP[_snp_idx, :]
+
+    ## Fit models
     if nproc > 1:
         result = []
         pool = multiprocessing.Pool(processes = nproc)
         for i in range(AD.shape[1]): 
             _ad = AD[:, i].toarray().reshape(-1)
             _dp = DP[:, i].toarray().reshape(-1)
-            result.append(pool.apply_async(_fit_EM_ambient, 
-            (_ad, _dp, theta_mat, vobj.n_donor), callback = None))
+            result.append(pool.apply_async(
+                _fit_EM_ambient, (_ad, _dp, theta_mat, None), callback = None))
         pool.close()
         pool.join()
         res_list = [res.get() for res in result]
@@ -212,12 +257,11 @@ def predit_ambient(vobj, AD, DP, nproc=10):
         for i in range(AD.shape[1]):
             _ad = AD[:, i].toarray().reshape(-1)
             _dp = DP[:, i].toarray().reshape(-1)
-            _res = _fit_EM_ambient(_ad, _dp, theta_mat, vobj.n_donor)
-
+            
             Psi_mat[i, :], Psi_var[i, :], Psi_logLik[i] = _fit_EM_ambient(
-                _ad, _dp, theta_mat, vobj.n_donor)
+                _ad, _dp, theta_mat, None)
 
     stop = timeit.default_timer()
-    print('Time: ', stop - start)
+    print('[vireo] Ambient RNA time: %.1f sec' %(stop - start))
 
     return Psi_mat, Psi_var, Psi_logLik

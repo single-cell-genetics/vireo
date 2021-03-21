@@ -9,11 +9,11 @@ Home
 About Vireo
 ===========
 
-This document gives an introduction and usage manual of Vireo (Variational 
+This documententation gives an introduction and usage manual of Vireo (Variational 
 inference for reconstructing ensemble origins), a Bayesian method to demultiplex
-pooled scRNA-seq data without genotype reference.
+pooled scRNA-seq data with or without genotype reference.
 
-Vireo is primarily designed demultiplexing cells into donors by modelling of
+Vireo is primarily designed for demultiplexing cells into donors by modelling of
 expressed alleles. It supports a variety of settings of donor genotype (from
 entirely missing, to partially missing, to fully observed). See more details in
 `manual`_ section.
