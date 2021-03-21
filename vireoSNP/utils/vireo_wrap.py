@@ -9,7 +9,7 @@ from scipy.sparse import csc_matrix
 from .vireo_base import optimal_match, donor_select
 from .vireo_model import Vireo
 from .vireo_doublet import predict_doublet, predit_ambient
-
+from .vireo_doublet2 import predict_doublet2
 
 def _model_fit(_model, AD, DP, max_iter, delay_fit_theta):
     """Temp function for model fitting with multiple processes
@@ -149,7 +149,7 @@ def vireo_wrap(AD, DP, GT_prior=None, n_donor=None, learn_GT=True, n_init=20,
 
     ## Predict doublets
     if check_doublet:
-        doublet_prob, ID_prob = predict_doublet(modelCA, AD, DP)
+        doublet_prob, ID_prob = predict_doublet2(modelCA, AD, DP)
     else:
         ID_prob = modelCA.ID_prob
         doublet_prob = np.zeros((AD.shape[1], int(n_donor * (n_donor - 1) / 2)))
