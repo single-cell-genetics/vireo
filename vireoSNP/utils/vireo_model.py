@@ -67,32 +67,42 @@ class Vireo():
         self.learn_theta = learn_theta
         self.fix_beta_sum = fix_beta_sum
         
-        theta_len = n_var if ASE_mode else 1
+        self.ELBO_ = np.zeros((0))
         
         # initial key parameters
+        self.set_initial(beta_mu_init, beta_sum_init, ID_prob_init, GT_prob_init)
+        
+        # set hyper parameters for prior
+        self.set_prior()
+
+    def set_initial(self, beta_mu_init=None, beta_sum_init=None, 
+        ID_prob_init=None, GT_prob_init=None):
+        """Set initial values
+        """
+        theta_len = self.n_var if self.ASE_mode else 1
+
         if beta_mu_init is not None:
             self.beta_mu = beta_mu_init
         else:
-            self.beta_mu = (np.ones((theta_len, n_GT)) * 
-                np.linspace(0.01, 0.99, n_GT).reshape(1, -1))
+            self.beta_mu = (np.ones((theta_len, self.n_GT)) * 
+                np.linspace(0.01, 0.99, self.n_GT).reshape(1, -1))
 
         if beta_sum_init is not None:
             self.beta_sum = beta_sum_init
         else:
-            self.beta_sum = np.ones((theta_len, n_GT)) * 50
+            self.beta_sum = np.ones((theta_len, self.n_GT)) * 50
 
         if ID_prob_init is not None:
             self.ID_prob = normalize(ID_prob_init, axis=1)
         else:
-            self.ID_prob = normalize(np.random.rand(n_cell, n_donor))
+            self.ID_prob = normalize(np.random.rand(self.n_cell, self.n_donor))
 
         if GT_prob_init is not None:
             self.GT_prob = normalize(GT_prob_init)
         else:        
-            self.GT_prob = normalize(np.random.rand(n_var, n_donor, n_GT))
+            _GT_val = np.random.rand(self.n_var, self.n_donor, self.n_GT)
+            self.GT_prob = normalize(_GT_val)
 
-        self.ELBO_ = np.zeros((0))
-        self.set_prior()
     
     def set_prior(self, GT_prior=None, ID_prior=None, beta_mu_prior=None, 
         beta_sum_prior=None, min_GP=0.00001):
@@ -238,8 +248,35 @@ class Vireo():
         return LB_p - KL_ID - KL_GT - KL_theta
 
 
-    def fit(self, AD, DP, max_iter=200, min_iter=5, epsilon_conv=1e-2,
+    def _fit_VB(self, AD, DP, max_iter=200, min_iter=5, epsilon_conv=1e-2,
         delay_fit_theta=0, verbose=True):
+        """Fit Vireo model with coordinate ascent
+        """
+        ELBO = np.zeros(max_iter)
+        numerical_minimal = 1e-6
+        for it in range(max_iter):
+            if self.learn_theta and it >= delay_fit_theta:
+                self.update_theta_size(AD, DP)
+            if self.learn_GT:
+                self.update_GT_prob(AD, DP)
+
+            _logLik_ID = self.update_ID_prob(AD, DP)
+            ELBO[it] = self.get_ELBO(_logLik_ID) #+ _binom_coeff_log
+            
+            if it > min_iter:
+                if ELBO[it] < ELBO[it - 1] - numerical_minimal:
+                    if verbose:
+                        print("Warning: Lower bound decreases!\n")
+                elif it == max_iter - 1:
+                    if verbose:
+                        print("Warning: VB did not converge!\n")
+                elif ELBO[it] - ELBO[it - 1] < epsilon_conv:
+                    break
+        
+        return ELBO[:it]
+
+    def fit(self, AD, DP, max_iter=200, min_iter=5, epsilon_conv=1e-2,
+        delay_fit_theta=0, verbose=True, n_inits=50, nproc=1):
         """Fit Vireo model with coordinate ascent
 
         Parameters
@@ -267,26 +304,12 @@ class Vireo():
             AD = csc_matrix(AD)
             DP = csc_matrix(DP)
 
+        ELBO = self._fit_VB(AD, DP, max_iter, min_iter, epsilon_conv, 
+                            delay_fit_theta, verbose)
+
         # _binom_coeff_log = np.sum(logbincoeff(DP, AD, is_sparse=True))
-        _binom_coeff_log = np.sum(get_binom_coeff(AD, DP))
-        ELBO = np.zeros(max_iter)
-        numerical_minimal = 1e-6
-        for it in range(max_iter):
-            if self.learn_theta and it >= delay_fit_theta:
-                self.update_theta_size(AD, DP)
-            if self.learn_GT:
-                self.update_GT_prob(AD, DP)
+        # _binom_coeff_log = np.sum(get_binom_coeff(AD, DP))
+        
+        ELBO += np.sum(get_binom_coeff(AD, DP))
 
-            _logLik_ID = self.update_ID_prob(AD, DP)
-            ELBO[it] = self.get_ELBO(_logLik_ID) + _binom_coeff_log
-
-            if it > min_iter:
-                if ELBO[it] < ELBO[it - 1] - numerical_minimal:
-                    if verbose:
-                        print("Warning: Lower bound decreases!\n")
-                elif it == max_iter - 1:
-                    if verbose:
-                        print("Warning: VB did not converge!\n")
-                elif ELBO[it] - ELBO[it - 1] < epsilon_conv:
-                    break
-        self.ELBO_ = np.append(self.ELBO_, ELBO[:it])
+        self.ELBO_ = np.append(self.ELBO_, ELBO)
