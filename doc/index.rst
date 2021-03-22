@@ -9,7 +9,7 @@ Home
 About Vireo
 ===========
 
-This documententation gives an introduction and usage manual of Vireo (Variational 
+This documentation gives an introduction and usage manual of Vireo (Variational 
 inference for reconstructing ensemble origins), a Bayesian method to demultiplex
 pooled scRNA-seq data with or without genotype reference.
 
