@@ -57,12 +57,12 @@ class BinomMixtureVB():
         self.set_prior()
 
         # initial key parameters
-        self.reset_initial(
+        self.set_initial(
             self.beta_mu_init, self.beta_sum_init, self.ID_prob_init
         )
         
 
-    def reset_initial(self, beta_mu_init=None, beta_sum_init=None, 
+    def set_initial(self, beta_mu_init=None, beta_sum_init=None, 
         ID_prob_init=None):
         """Random initialization
         """
@@ -240,7 +240,7 @@ class BinomMixtureVB():
 
         self.ELBO_inits = []
         for i in range(n_init):
-            self.reset_initial(
+            self.set_initial(
                 self.beta_mu_init, self.beta_sum_init, self.ID_prob_init
             )
             self._fit_BV(AD, DP, max_iter=max_iter_pre, **kwargs)
@@ -254,7 +254,7 @@ class BinomMixtureVB():
                 _ELBO_iters_best = self.ELBO_iters + 0
                 
         ## Re-fit with best parameters
-        self.reset_initial(_beta_mu_best, _beta_sum_best, _ID_prob_best)
+        self.set_initial(_beta_mu_best, _beta_sum_best, _ID_prob_best)
         self.ELBO_iters = _ELBO_iters_best
         self._fit_BV(AD, DP, max_iter=max_iter, **kwargs)
 

@@ -1,11 +1,65 @@
 API
 ===
 
+.. automodule:: vireoSNP
+
+Import vireoSNP as::
+
+   import vireoSNP
+
+
+Commands
+--------
+
+* vireo: see manual
+* GTbarcode: see manual
+
+
+Read / Load
+-----------
+
+.. autofunction:: vireoSNP.read_cellSNP
+
+.. autofunction:: vireoSNP.read_vartrix
+
+
+VCF processing
+--------------
+
+.. autofunction:: vireoSNP.vcf.load_VCF
+
+.. autofunction:: vireoSNP.vcf.parse_donor_GPb
+
+
+Plotting
+--------
+
+**Heatmap plot**
+
+.. autofunction:: vireoSNP.plot.heat_matrix
+   
+
+**Annotated heatmap plot**
+
+.. autofunction:: vireoSNP.plot.anno_heat
+
+
+
 Vireo Object
 ------------
 
 Objects of type :class:`~vireoSNP.Vireo` allow clustering cells by allelic ratio
 
 .. autoclass:: vireoSNP.Vireo
-   :members:
+   :members: __init__, set_initial, set_prior, fit
+
+
+BinomMixtureVB Object
+---------------------
+
+Objects of type :class:`~vireoSNP.BinomMixtureVB` for clustering with binomial
+mixture model
+
+.. autoclass:: vireoSNP.BinomMixtureVB
+   :members: __init__, set_initial, set_prior, fit
 

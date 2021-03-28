@@ -2,6 +2,12 @@
 History
 =======
 
+Release v0.5.5 (28/03/2021)
+===========================
+* update notebook `vireoSNP_clones.ipynb`
+* update API
+
+
 Release v0.5.4 (xxx)
 ====================
 * introduce log likelihood ratio for detecting ambient RNAs
