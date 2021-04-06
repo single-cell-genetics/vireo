@@ -23,10 +23,10 @@ from datetime import datetime
 #sys.path.insert(0, os.path.abspath('.'))
 
 
-from pathlib import Path
-HERE = Path(__file__).parent
-sys.path.insert(0, f"{HERE.parent.parent}")
-sys.path.insert(0, os.path.abspath("_ext"))
+# from pathlib import Path
+# HERE = Path(__file__).parent
+# sys.path.insert(0, f"{HERE.parent.parent}")
+# sys.path.insert(0, os.path.abspath("_ext"))
 
 # -- Retrieve notebooks ------------------------------------------------
 from urllib.request import urlretrieve
