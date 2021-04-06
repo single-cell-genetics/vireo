@@ -11,6 +11,48 @@ def heat_matrix(X, yticks=None, xticks=None, rotation=45, cmap='BuGn',
                 aspect='auto', interpolation='none', **kwargs):
     """
     Plot heatmap of distance matrix
+
+    Parameters
+    ----------
+    X: numpy.array or matrix
+        The matrix to plot in heatmap
+    yticks: list
+        The ticks ids for y axis
+    xticks: list
+        The ticks ids for x axis
+    ratation: scalar
+        The ratation angel for xticks
+    cmap: str
+        The colormap for the heatmap, more options: 
+        https://matplotlib.org/stable/tutorials/colors/colormaps.html
+    alpha: scalar
+        The transparency, value between 0 and 1
+    display_value: bool
+        If True, dispaly the values in the heatmap
+    raw_sort: bool
+        If True, sort the rows with row index as
+        row_idx = np.argsort(np.dot(X, 2**np.arange(X.shape[1])))
+    aspect: str
+        `aspect` in `plt.imshow`
+    interpolation: str
+        `interpolation` in `plt.imshow`
+    **kwargs: keywords & values
+        `**kwargs` for `plt.imshow`
+    
+    Returns
+    -------
+    The return from `plt.imshow`
+
+    Examples
+    --------
+
+    .. plot::
+
+        >>> from vireoSNP.plot import heat_matrix
+        >>> import numpy as np
+        >>> np.random.seed(1)
+        >>> X = np.random.rand(5, 7)
+        >>> heat_matrix(X)
     """
     import matplotlib.pyplot as plt
     

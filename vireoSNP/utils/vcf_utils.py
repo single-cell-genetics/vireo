@@ -7,6 +7,7 @@ import sys
 import gzip
 import subprocess
 import numpy as np
+from .vireo_base import match, optimal_match
 
 def parse_sample_info(sample_dat, sparse=True, format_list=None):
     """
@@ -23,6 +24,7 @@ def parse_sample_info(sample_dat, sparse=True, format_list=None):
         format_list = format_all[0]
 
     RV = {}
+    n_SNP_tagged = np.zeros(len(format_list), np.int64)
     for _key in format_list:
         RV[_key] = []
     if sparse:
@@ -50,19 +52,29 @@ def parse_sample_info(sample_dat, sparse=True, format_list=None):
 
                 cnt += 1
                 RV['indices'].append(i)
+                n_SNP_tagged += 1
             RV['indptr'].append(cnt)
     else:
         for j in range(len(sample_dat)): #variant j
             _line = sample_dat[j]
             _line_split = [x.split(":") for x in _line[1:]]
-            for _key in format_list:
+            for il, _key in enumerate(format_list):
                 if _key in format_all[j]:
                     k = format_all[j].index(_key)
                     _line_key = [x[k] for x in _line_split]
                     RV[_key].append(_line_key)
+                    n_SNP_tagged[il] += 1
                 else:
-                    RV[_key].append(".")
-    return RV
+                    RV[_key].append(["."] * len(_line_split))
+
+    # Check if format tags are well convered
+    idx_low_tag = np.where(n_SNP_tagged < (0.1 * len(sample_dat)))[0]
+    if len(idx_low_tag) > 0:
+        print('[vireo] Warning: too few variants with tags!',
+              '\t'.join([format_list[k] + ": " + str(n_SNP_tagged[k])
+                         for k in range(len(format_list))]))
+    
+    return RV, n_SNP_tagged
 
 
 def load_VCF(vcf_file, biallelic_only=False, load_sample=True, sparse=True,
@@ -123,7 +135,8 @@ def load_VCF(vcf_file, biallelic_only=False, load_sample=True, sparse=True,
     RV["comments"]  = comment_lines
     if load_sample:
         RV["samples"]   = obs_ids
-        RV["GenoINFO"]  = parse_sample_info(obs_dat, sparse, format_list)
+        RV["GenoINFO"], RV["n_SNP_tagged"]  = parse_sample_info(
+            obs_dat, sparse, format_list)
     return RV
 
 
@@ -266,3 +279,74 @@ def parse_donor_GPb(GT_dat, tag='GT', min_prob=0.0):
             GT_prob[i, j, :] = parse_GT_code(GT_dat[i][j], tag,
                                              min_prob)
     return GT_prob
+
+
+def match_VCF_samples(VCF_file1, VCF_file2, GT_tag1, GT_tag2):
+    """Match donors in two VCF files. Please subset the VCF with bcftools first,
+    as it is more computationally efficient:
+
+    `bcftools view large_file.vcf.gz -R small_file.vcf.gz -Oz -o sub.vcf.gz`
+
+    Parameters
+    ----------
+    VCF_file1: str
+        the full path of first VCF file, in plain text or gzip / bgzip
+    VCF_file2: str
+        the full path of second VCF file, in plain text or gzip / bgzip
+    GT_tag1: str
+        the tag for extracting the genotype probability in VCF1: GT, GP, PL
+    GT_tag2: str
+        the tag for extracting the genotype probability in VCF2: GT, GP, PL
+    """
+    # VCF file 1
+    vcf_dat0 = load_VCF(
+        VCF_file1, biallelic_only=True, sparse=False, format_list=[GT_tag1])
+
+    GPb0_var_ids = np.array(vcf_dat0['variants'])
+    GPb0_donor_ids = np.array(vcf_dat0['samples'])
+    GPb0_tensor = parse_donor_GPb(vcf_dat0['GenoINFO'][GT_tag1], GT_tag1)
+    print('Shape for Geno Prob in VCF1:', GPb0_tensor.shape)
+
+    # VCF file 2
+    vcf_dat1 = load_VCF(
+        VCF_file2, biallelic_only=True, sparse=False, format_list=[GT_tag2])
+    GPb1_var_ids = np.array(vcf_dat1['variants'])
+    GPb1_donor_ids = np.array(vcf_dat1['samples'])
+    GPb1_tensor = parse_donor_GPb(vcf_dat1['GenoINFO'][GT_tag1], GT_tag1)
+    GPb1_tensor.shape
+    print('Shape for Geno Prob in VCF2:', GPb0_tensor.shape)
+
+    # Match variants
+    mm_idx = match(GPb1_var_ids, GPb0_var_ids)
+    mm_idx = mm_idx.astype(float)
+    idx1 = np.where(mm_idx == mm_idx)[0] #remove None for unmatched
+    idx2 = mm_idx[idx1].astype(int)
+
+    GPb1_var_ids_use = GPb1_var_ids[idx1]
+    GPb0_var_ids_use = GPb0_var_ids[idx2]
+    # print(np.mean(GPb0_var_ids_use == GPb1_var_ids_use))
+
+    GPb1_tensor_use = GPb1_tensor[idx1]
+    GPb0_tensor_use = GPb0_tensor[idx2]
+    print("n_variants in VCF1, VCF2 and matchd: %d, %d, %d" 
+        %(GPb0_var_ids.shape[0], GPb1_var_ids.shape[0], len(idx1))
+    )
+
+    # Match donors
+    idx0, idx1, GPb_diff = optimal_match(
+        GPb0_tensor_use, GPb1_tensor_use, axis=1, return_delta=True)
+    
+    print("aligned donors:")
+    print(GPb0_donor_ids[idx0])
+    print(GPb1_donor_ids[idx1])
+
+    RV = {}
+    RV['matched_GPb_diff'] = GPb_diff[idx0, :][:, idx1]
+    RV['matched_donors1'] = GPb0_donor_ids[idx0]
+    RV['matched_donors2'] = GPb1_donor_ids[idx1]
+    RV['full_GPb_diff'] = GPb_diff
+    RV['full_donors1'] = GPb0_donor_ids
+    RV['full_donors2'] = GPb1_donor_ids
+    RV['matched_n_var'] = len(GPb0_var_ids_use)
+    
+    return RV

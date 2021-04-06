@@ -14,8 +14,9 @@ high quality genotyping data to demultiplex cells.
 **Recommended strategies for genotyping cells:**
 
 * For human or genotyped species: `variant list`_ (given) + cellsnp-lite_ (typing).
-* For species without known common variants: cellsnp-lite_ (calling & typing),
-  or freebayes_ (for calling of heterozygous SNPs first)
+* For species without known common variants: cellsnp-lite_ (calling with mode 1b
+  & typing with mode 1a). freebayes_ is an alternative to cellsnp-lite_ mode 1b
+  for calling of heterozygous SNPs.
 
 .. note::
    cellSNP_ was initially developed in Python based on pysam, which is 
@@ -54,11 +55,10 @@ polymorphisms, specifically SNPs, indels, MNPs, and complex events smaller than
 the length of a short-read sequencing alignment. Importantly, freebayes_ has 
 a set of options to filter reads and variants.
 
-Alternatively, cellsnp-lite_ has a similar feature (still under development) to 
+Alternatively, cellsnp-lite_ (mode 1b) developed by us has a similar feature to 
 pileup the whole genome and identify the heterozygous variants in the pooled 
-samples. However, this mode doesn't have a sophisticated model and filtering 
-strategy for indentifying candidate SNPs, and may struggle with confounders 
-from RNA editing.
+samples. It has highly comparable performance to freebayes_ and bcftools mpileup_
+and achieves 5-10x speedups.
 
 
 2. Genotype each cell
@@ -90,7 +90,7 @@ demultiplex the pooled cells, see the manual_.
 .. _pre-processed SNP list: https://sourceforge.net/projects/cellsnp/files/SNPlist/
 .. _freebayes: https://github.com/ekg/freebayes
 .. _cellSNP: https://github.com/single-cell-genetics/cellSNP
-.. _cellsnp-lite: https://github.com/single-cell-genetics/cellsnp-lite
+.. _cellsnp-lite: https://cellsnp-lite.readthedocs.io/en/latest/manual.html
 .. _mpileup: http://www.htslib.org/doc/bcftools.html
 .. _vartrix: https://github.com/10XGenomics/vartrix
 .. _manual: https://vireosnp.readthedocs.io/en/latest/manual.html

@@ -14,6 +14,8 @@ from .utils.vireo_model import Vireo
 from .utils.vireo_bulk import VireoBulk, LikRatio_test
 from .utils.bmm_model import BinomMixtureVB
 
+from . import plot
+
 __all__ = [
     "__version__",
     "utils",

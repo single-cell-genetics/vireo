@@ -27,8 +27,11 @@ while the Python package name is vireoSNP_ to aviod name confilict on PyPI.
 News
 ====
 * All release notes can be found in doc/release.rst_.
+* Notebook_ for subclone reconstructing with mitochrondrial mutations
 
 .. _release.rst: https://github.com/single-cell-genetics/vireo/blob/master/doc/release.rst
+.. _Notebook: https://vireosnp.readthedocs.io/en/latest/vireoSNP_clones.html
+
 
 Installation
 ============

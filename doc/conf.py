@@ -14,12 +14,36 @@
 
 import sys
 import os
-import sphinx_bootstrap_theme
+# import sphinx_bootstrap_theme
+from datetime import datetime
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
+
+
+from pathlib import Path
+HERE = Path(__file__).parent
+sys.path.insert(0, f"{HERE.parent.parent}")
+sys.path.insert(0, os.path.abspath("_ext"))
+
+# -- Retrieve notebooks ------------------------------------------------
+from urllib.request import urlretrieve
+from shutil import copyfile
+
+notebooks_url = "../examples/"
+notebooks = [
+    "vireoSNP_clones.ipynb",
+]
+for nb in notebooks:
+    try:
+        # urlretrieve(notebooks_url + nb, nb)
+        copyfile(notebooks_url + nb, nb)
+    except:
+        print("test", notebooks_url + nb)
+        pass
+
 
 # -- General configuration ------------------------------------------------
 
@@ -29,17 +53,35 @@ import sphinx_bootstrap_theme
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
+
+# extensions = [
+#     'sphinx.ext.autodoc',
+#     'sphinx.ext.doctest',
+#     'sphinx.ext.imgmath',
+# ]
+
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.doctest",
     'sphinx.ext.imgmath',
+    "sphinx.ext.coverage",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.githubpages",
+    "sphinx_autodoc_typehints",
+    "matplotlib.sphinxext.plot_directive",
+    "nbsphinx",
+    # "edit_on_github"
 ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = ['.rst', '.ipynb']
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
@@ -49,7 +91,9 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'vireoSNP'
-copyright = u'2018, Yuanhua Huang'
+author = "Yuanhua Huang"
+title = "Variational inference for donor deconvolution & subclone reconstruction."
+copyright = f"{datetime.now():%Y}, {author}"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -107,84 +151,90 @@ pygments_style = 'sphinx'
 # html_theme = 'default'
 # html_theme = "bizstyle"
 # html_theme = "nature"
-html_theme = 'bootstrap'
-html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+html_theme = 'sphinx_rtd_theme'
+# html_theme = 'sphinx_materialdesign_theme'
+# html_theme = 'bootstrap'
+# html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+
+github_repo = 'vireo'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #html_theme_options = {}
-html_theme_options = {
-    # Navigation bar title. (Default: ``project`` value)
-    'navbar_title': "Vireo",
+html_theme_options = dict(navigation_depth=1, titles_only=True)
+# html_theme_options = {
+#     # Navigation bar title. (Default: ``project`` value)
+#     'navbar_title': "Vireo",
 
-    # Tab name for entire site. (Default: "Site")
-    'navbar_site_name': "Site",
+#     # Tab name for entire site. (Default: "Site")
+#     'navbar_site_name': "Site",
 
-    # Tab name for the current pages TOC. (Default: "Page")
-    'navbar_pagenav_name': "Page",
+#     # Tab name for the current pages TOC. (Default: "Page")
+#     'navbar_pagenav_name': "Page",
 
-    # A list of tuples containing pages or urls to link to.
-    # Valid tuples should be in the following forms:
-    #    (name, page)                 # a link to a page
-    #    (name, "/aa/bb", 1)          # a link to an arbitrary relative url
-    #    (name, "http://example.com", True) # arbitrary absolute url
-    # Note the "1" or "True" value above as the third argument to indicate
-    # an arbitrary url.
-    'navbar_links': [
-        ("Install", "install"),
-        ("Manual", "manual"),
-        ("Genotyping", "genotype"),
-        ("API", "API"),
-        ("Release", "release")
-        # ("Tutorials", "tutorials"),
-        # ("Link", "http://example.com", True),
-    ],
+#     # A list of tuples containing pages or urls to link to.
+#     # Valid tuples should be in the following forms:
+#     #    (name, page)                 # a link to a page
+#     #    (name, "/aa/bb", 1)          # a link to an arbitrary relative url
+#     #    (name, "http://example.com", True) # arbitrary absolute url
+#     # Note the "1" or "True" value above as the third argument to indicate
+#     # an arbitrary url.
+#     'navbar_links': [
+#         ("Install", "install"),
+#         ("Manual", "manual"),
+#         ("Genotyping", "genotype"),
+#         ("Subclones", "https://nbviewer.jupyter.org/github/single-cell-genetics/vireo/blob/master/examples/vireoSNP_clones.ipynb", True),
+#         ("API", "API"),
+#         ("Release", "release")
+#         # ("Tutorials", "tutorials"),
+#         # ("Link", "http://example.com", True),
+#     ],
 
-    'navbar_sidebarrel': False,
+#     'navbar_sidebarrel': False,
 
-    # Global TOC depth for "site" navbar tab. (Default: 1)
-    # Switching to -1 shows all levels.
-    'globaltoc_depth': 1,
+#     # Global TOC depth for "site" navbar tab. (Default: 1)
+#     # Switching to -1 shows all levels.
+#     'globaltoc_depth': 1,
 
-    # Include hidden TOCs in Site navbar?
-    #
-    # Note: If this is "false", you cannot have mixed ``:hidden:`` and
-    # non-hidden ``toctree`` directives in the same page, or else the build
-    # will break.
-    #
-    # Values: "true" (default) or "false"
-    'globaltoc_includehidden': "true",
+#     # Include hidden TOCs in Site navbar?
+#     #
+#     # Note: If this is "false", you cannot have mixed ``:hidden:`` and
+#     # non-hidden ``toctree`` directives in the same page, or else the build
+#     # will break.
+#     #
+#     # Values: "true" (default) or "false"
+#     'globaltoc_includehidden': "true",
 
-    # HTML navbar class (Default: "navbar") to attach to <div> element.
-    # For black navbar, do "navbar navbar-inverse"
-    'navbar_class': "navbar", #"navbar",
+#     # HTML navbar class (Default: "navbar") to attach to <div> element.
+#     # For black navbar, do "navbar navbar-inverse"
+#     'navbar_class': "navbar", #"navbar",
 
-    # Fix navigation bar to top of page?
-    # Values: "true" (default) or "false"
-    'navbar_fixed_top': "true",
+#     # Fix navigation bar to top of page?
+#     # Values: "true" (default) or "false"
+#     'navbar_fixed_top': "true",
 
-    # Location of link to source.
-    # Options are "nav" (default), "footer" or anything else to exclude.
-    'source_link_position': "footer", #"nav",
+#     # Location of link to source.
+#     # Options are "nav" (default), "footer" or anything else to exclude.
+#     'source_link_position': "footer", #"nav",
 
-    # Bootswatch (http://bootswatch.com/) theme.
-    #
-    # Options are nothing (default) or the name of a valid theme such
-    # as "amelia" or "cosmo".
-    #
-    # Example themes:
-    # * flatly
-    # * sandstone (v3 only)
-    # * united
-    # * yeti (v3 only)
-    # * cerulean
-    'bootswatch_theme': "flatly",
+#     # Bootswatch (http://bootswatch.com/) theme.
+#     #
+#     # Options are nothing (default) or the name of a valid theme such
+#     # as "amelia" or "cosmo".
+#     #
+#     # Example themes:
+#     # * flatly
+#     # * sandstone (v3 only)
+#     # * united
+#     # * yeti (v3 only)
+#     # * cerulean
+#     'bootswatch_theme': "flatly",
 
-    # Choose Bootstrap version.
-    # Values: "3" (default) or "2" (in quotes)
-    'bootstrap_version': "3",
-}
+#     # Choose Bootstrap version.
+#     # Values: "3" (default) or "2" (in quotes)
+#     'bootstrap_version': "3",
+# }
 
 
 # Add any paths that contain custom themes here, relative to this directory.
@@ -260,7 +310,8 @@ html_static_path = ['_static']
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'Vireo'
-
+plot_formats = [("png", 80)]
+plot_include_source = True
 
 # -- Options for LaTeX output ---------------------------------------------
 

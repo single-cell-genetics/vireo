@@ -6,8 +6,8 @@ Demultiplexing requires two count matrices (variant-by-cell) of reads or UMIs
 for each variant in each cell: ``AD`` for alternative allele and ``DP`` depth 
 (i.e., summary of alternative and reference alleles). These two matrices can be 
 obtained by genotyping a list of variants in each cell. We provide a guideline 
-for cellular genotyping_ with a recommendation of cellSNP_ that is developed by 
-us, too.
+for cellular genotyping_ with a recommendation of cellSNP-lite_ that is also 
+developed by us.
 
 Once the genotypes for each cell have been obtained, e.g., in VCF format, or two
 sparse matrices ``AD`` and ``DP``, we can apply Vireo for demultiplexing.
@@ -42,9 +42,14 @@ to demultiplex scRNA-seq data.
    Optionally, `-N` can be provided if it is samller than that in DONOR_GT_FILE
    for finding the relevant subset of donors.
 
-   **Note** For efficient loading of donor VCF file, we recommend subset it
-   ``bcftools view donor.vcf.gz -R cellSNP.cells.vcf.gz -Oz -o sub.vcf.gz``
-   Also, add ``-s`` or ``-S`` for subsetting samples. 
+   .. note::
+      For efficient loading of donor VCF file, we recommend subset it
+      ``bcftools view donor.vcf.gz -R cellSNP.cells.vcf.gz -Oz -o sub.vcf.gz``
+      
+      You can also add ``-s`` or ``-S`` for subsetting samples. 
+
+      Make sure you only keep informative SNPs, e.g., by filtering out SNPs
+      with too much missing values or the gentoypes too similar across donors.
 
 3) with genotype for part of the samples (n_donor is larger than that in 
    DONOR_GT_FILE)
@@ -165,6 +170,6 @@ This example data set contains 952 cells from 4 samples. The genotypes for these
 four samples are also provided.
 
 .. _genotyping: https://vireoSNP.readthedocs.io/en/latest/genotype.html
-.. _cellSNP: https://github.com/huangyh09/cellSNP
+.. _cellSNP-lite: https://cellsnp-lite.readthedocs.io/en/latest/manual.html
 .. _demo scripts: https://github.com/huangyh09/vireo/blob/master/examples/demo.sh
 .. _data set: https://github.com/huangyh09/vireo/tree/master/data

@@ -30,6 +30,8 @@ VCF processing
 
 .. autofunction:: vireoSNP.vcf.parse_donor_GPb
 
+.. autofunction:: vireoSNP.vcf.match_VCF_samples
+
 
 Plotting
 --------

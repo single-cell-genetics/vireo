@@ -2,22 +2,28 @@
 History
 =======
 
+Release v0.5.6 (06/04/2021)
+===========================
+* fix a bug for detecting unsupported genotyep tag
+* add a wrap function to compare samples in two VCF files
+* update documentation with supporting notebook `vireoSNP_clones.ipynb`
+* update API
+
 Release v0.5.5 (28/03/2021)
 ===========================
 * update notebook `vireoSNP_clones.ipynb`
 * update API
 
-
-Release v0.5.4 (xxx)
-====================
+Release v0.5.4 (28/03/2021)
+===========================
 * introduce log likelihood ratio for detecting ambient RNAs
 * support ambient RNAs from a mixture of all donors or only two donors
 * introduce multiple processes for multiple initializations
 * introduce ELBO_gain for selecting variants
 * For donor_ids.tsv, the doublet_prob change from sum to max
 
-Release v0.5.3 (xxx)
-====================
+Release v0.5.3 (28/03/2021)
+===========================
 * support detection of ambient RNAs, alternative way for doublet detection
 
 Release v0.5.0 (09/02/2021)
