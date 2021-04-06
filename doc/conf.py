@@ -93,7 +93,8 @@ master_doc = 'index'
 project = u'vireoSNP'
 author = "Yuanhua Huang"
 title = "Variational inference for donor deconvolution & subclone reconstruction."
-copyright = f"{datetime.now():%Y}, {author}"
+copyright = "2021, Yuanhua Huang"
+# copyright = f"{datetime.now():%Y}, {author}"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
