@@ -1,0 +1,14 @@
+# Just until rtd.org understands pyproject.toml
+vireoSNP>=0.5.6
+
+setuptools
+setuptools_scm
+typing_extensions
+importlib_metadata
+sphinx_rtd_theme>=0.3
+sphinx_autodoc_typehints<=1.6
+
+# converting notebooks to html
+ipykernel
+sphinx>=1.7
+nbsphinx>=0.7
