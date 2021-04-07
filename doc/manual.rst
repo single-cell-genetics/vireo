@@ -125,6 +125,13 @@ Type ``vireo -h`` for details of all arguments:
       --noPlot            If use, turn off plotting GT distance.
       --randSeed=RAND_SEED
                            Seed for random initialization [default: none]
+      --cellRange=CELL_RANGE
+                           Range of cells to process, eg. 0-10000 [default: all]
+      --callAmbientRNAs   If use, detect ambient RNAs in each cell (under
+                           development)
+      -p NPROC, --nproc=NPROC
+                           Number of subprocesses for computing - this sacrifices
+                           memory for speedups [default: 1]
 
 
 

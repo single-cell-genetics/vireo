@@ -2,7 +2,7 @@
 History
 =======
 
-Release v0.5.6 (06/04/2021)
+Release v0.5.6 (07/04/2021)
 ===========================
 * fix a bug for detecting unsupported genotyep tag
 * add a wrap function to compare samples in two VCF files

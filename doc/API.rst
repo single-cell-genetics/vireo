@@ -11,9 +11,10 @@ Import vireoSNP as::
 Commands
 --------
 
-* vireo: see manual
-* GTbarcode: see manual
+* ``vireo``: see manual_
+* ``GTbarcode``: see manual_
 
+.. _manual: https://vireosnp.readthedocs.io/en/latest/manual.html
 
 Read / Load
 -----------
