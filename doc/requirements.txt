@@ -1,5 +1,7 @@
 # Just until rtd.org understands pyproject.toml
 
+vireoSNP
+
 setuptools
 setuptools_scm
 typing_extensions
