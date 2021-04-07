@@ -1,5 +1,4 @@
 # Just until rtd.org understands pyproject.toml
-vireoSNP>=0.5.6
 
 setuptools
 setuptools_scm

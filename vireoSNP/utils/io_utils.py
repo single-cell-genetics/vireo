@@ -138,12 +138,13 @@ def write_donor_id(out_dir, donor_names, cell_names, n_vars, res_vireo):
     ## save donor_ids file
     fid = open(out_dir + "/donor_ids.tsv", "w")
     header = ["cell", "donor_id", "prob_max", "prob_doublet", "n_vars", 
-              "best_singlet", "best_doublet"]
+              "best_singlet", "best_doublet", "doublet_logLikRatio"]
     fid.writelines("\t".join(header) + "\n")
     for i in range(len(cell_names)):
         line = [cell_names[i], donor_ids[i], "%.2e" %prob_max[i],
                 "%.2e" %prob_doublet_out[i], "%d" %n_vars[i],
-                donor_singlet[i], donor_doublet[i]]
+                donor_singlet[i], donor_doublet[i], 
+                "%.3f" %res_vireo['doublet_LLR'][i]]
         fid.writelines("\t".join(line) + "\n") 
     fid.close()
 

@@ -61,6 +61,9 @@ def predict_doublet(vobj, AD, DP, update_GT=True, update_ID=True,
         SS = DP.T @ (GT_both[:, :, ig] * _digammas[:, :, ig])
         logLik_ID += (S1 + S2 - SS)
 
+    logLik_ratio = (logLik_ID[:, vobj.n_donor:].max(1) - 
+                    logLik_ID[:, :vobj.n_donor].max(1))
+
     ID_prob_both = normalize(np.exp(loglik_amplify(
         logLik_ID + np.log(ID_prior_both))))
 
@@ -73,7 +76,10 @@ def predict_doublet(vobj, AD, DP, update_GT=True, update_ID=True,
         else:
             print("For update_GT, please turn on update_ID.")
     
-    return ID_prob_both[:, vobj.n_donor:], ID_prob_both[:, :vobj.n_donor]
+    prob_doublet = ID_prob_both[:, vobj.n_donor:]
+    prob_signlet = ID_prob_both[:, :vobj.n_donor]
+    
+    return prob_doublet, prob_signlet, logLik_ratio
 
 
 def add_doublet_theta(beta_mu, beta_sum):
