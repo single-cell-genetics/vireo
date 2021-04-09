@@ -6,6 +6,7 @@ Release v0.5.6 (07/04/2021)
 ===========================
 * fix a bug for detecting unsupported genotyep tag
 * add a wrap function to compare samples in two VCF files
+* add doublet_logLikRatio in `donor_ids.tsv` for extra indicators of doublets
 * update documentation with supporting notebook `vireoSNP_clones.ipynb`
 * update API
 

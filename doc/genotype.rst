@@ -14,8 +14,8 @@ high quality genotyping data to demultiplex cells.
 **Recommended strategies for genotyping cells:**
 
 * For human or genotyped species: `variant list`_ (given) + cellsnp-lite_ (typing).
-* For species without known common variants: cellsnp-lite_ (calling with mode 1b
-  & typing with mode 1a). freebayes_ is an alternative to cellsnp-lite_ mode 1b
+* For species without known common variants: cellsnp-lite_ (calling with mode 2b
+  & typing with mode 1a). freebayes_ is an alternative to cellsnp-lite_ mode 2b
   for calling of heterozygous SNPs.
 
 .. note::
@@ -66,7 +66,7 @@ the length of a short-read sequencing alignment. Importantly, freebayes_ has
 a set of options to filter reads and variants.
 
 We also recommend an alternative method cellsnp-lite_ that is developed by us.  
-Its mode 1b has a similar feature to pileup the whole genome and identify the 
+Its mode 2b has a similar feature to pileup the whole genome and identify the 
 heterozygous variants in the pooled samples. It has highly comparable 
 accuracry to freebayes_ and bcftools mpileup_ and achieves 5-10x speedups.
 
