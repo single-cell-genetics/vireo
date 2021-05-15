@@ -2,6 +2,10 @@
 History
 =======
 
+Development on GitHub
+=====================
+* fix the issue when output_dir is not given
+
 Release v0.5.6 (07/04/2021)
 ===========================
 * fix a bug for detecting unsupported genotyep tag

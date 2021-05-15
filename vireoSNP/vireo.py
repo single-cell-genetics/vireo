@@ -95,7 +95,10 @@ def main():
     ## out directory
     if options.out_dir is None:
         print("Warning: no outDir provided, we use $cellFilePath/vireo.")
-        out_dir = os.path.dirname(os.path.abspath(options.cell_file)) + "/vireo"
+        input_dir = os.path.abspath(options.cell_data)
+        if input_dir is None and options.vartrix_data is not None:
+            input_dir = os.path.abspath(options.cell_data)
+        out_dir = os.path.dirname(input_dir) + "/vireo"
     elif os.path.dirname(options.out_dir) == "":
         out_dir= "./" + options.out_dir
     else:
