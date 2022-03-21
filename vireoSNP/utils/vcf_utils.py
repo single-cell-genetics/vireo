@@ -82,13 +82,32 @@ def load_VCF(vcf_file, biallelic_only=False, load_sample=True, sparse=True,
     """
     Load whole VCF file 
     -------------------
-    Initially designed to load VCF from cellSNP output, requiring 
+    Initially designed to load VCF from cellSNP output, requiring
+
     1) all variants have the same format list;
+
     2) a line starting with "#CHROM", with sample ids.
+
     If these two requirements are satisfied, this function also supports general
     VCF files, e.g., genotype for multiple samples.
 
     Note, it may take a large memory, please filter the VCF with bcftools first.
+
+    Examples
+    --------
+    * Load VCF file, e.g., from cellsnp-lite output:
+
+    >>> import vireoSNP
+    >>> import numpy as np
+    >>> vcf_dat = vireoSNP.vcf.load_VCF("cellSNP.cells.vcf.gz", sparse=False, 
+    >>>     biallelic_only=False, format_list=['GT', 'AD', 'DP', 'ALL'])
+    >>> var_ids = np.array(vcf_dat['variants'])
+    >>> samples = np.array(vcf_dat['samples'])
+    >>> GT_mat = np.array(vcf_dat['GenoINFO']['GT'])
+    >>> AD_mat = np.array(vcf_dat['GenoINFO']['AD']).astype(float)
+    >>> DP_mat = np.array(vcf_dat['GenoINFO']['DP']).astype(float)
+    >>> ALL_bases_mat = np.array(vcf_dat['GenoINFO']['ALL'])
+
     """
     if vcf_file[-3:] == ".gz" or vcf_file[-4:] == ".bgz":
         infile = gzip.open(vcf_file, "rb")
@@ -251,6 +270,10 @@ def parse_donor_GPb(GT_dat, tag='GT', min_prob=0.0):
     """
     Parse the donor genotype probability
     tag: GT, GP, or PL
+    
+    Examples
+    --------
+    >>> GProb_tensor = vireoSNP.vcf.parse_donor_GPb(vcf_dat['GenoINFO']['GT'], 'GT')
     """
     def parse_GT_code(code, tag, min_prob=0):
         if code == "." or code == "./." or code == ".|.":

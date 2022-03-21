@@ -27,7 +27,13 @@ Read / Load
 VCF processing
 --------------
 
+Load VCF to matrices
+~~~~~~~~~~~~~~~~~~~~
+
 .. autofunction:: vireoSNP.vcf.load_VCF
+
+Parse genotype probablity to tenseor
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: vireoSNP.vcf.parse_donor_GPb
 
@@ -37,12 +43,14 @@ VCF processing
 Plotting
 --------
 
-**Heatmap plot**
+Heatmap plot
+~~~~~~~~~~~~
 
 .. autofunction:: vireoSNP.plot.heat_matrix
    
 
-**Annotated heatmap plot**
+Annotated heatmap plot
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: vireoSNP.plot.anno_heat
 
