@@ -4,7 +4,11 @@ History
 
 Development on GitHub
 =====================
+
+Release v0.5.7 (24/03/2022)
+===========================
 * fix the issue when output_dir is not given
+* add doc for read VCF files
 
 Release v0.5.6 (07/04/2021)
 ===========================
