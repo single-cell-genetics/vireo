@@ -275,7 +275,7 @@ def parse_donor_GPb(GT_dat, tag='GT', min_prob=0.0):
     --------
     >>> GProb_tensor = vireoSNP.vcf.parse_donor_GPb(vcf_dat['GenoINFO']['GT'], 'GT')
     """
-    def parse_GT_code(code, tag, min_prob=0):
+    def parse_GT_code(code, tag):
         if code == "." or code == "./." or code == ".|.":
             return np.array([1/3, 1/3, 1/3])
         if tag == 'GT':
@@ -289,8 +289,7 @@ def parse_donor_GPb(GT_dat, tag='GT', min_prob=0.0):
         else:
             _prob = None
             
-        _prob += min_prob
-        return _prob / np.sum(_prob)
+        return _prob
 
     if ['GT', 'GP', 'PL'].count(tag) == 0:
         print("[parse_donor_GPb] Error: no support tag: %s" %tag)
@@ -299,8 +298,11 @@ def parse_donor_GPb(GT_dat, tag='GT', min_prob=0.0):
     GT_prob = np.zeros((len(GT_dat), len(GT_dat[0]), 3))
     for i in range(GT_prob.shape[0]):
         for j in range(GT_prob.shape[1]):
-            GT_prob[i, j, :] = parse_GT_code(GT_dat[i][j], tag,
-                                             min_prob)
+            GT_prob[i, j, :] = parse_GT_code(GT_dat[i][j], tag)
+
+    GT_prob += min_prob
+    GT_prob /= GT_prob.sum(axis=2, keepdims=True)
+
     return GT_prob
 
 

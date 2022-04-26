@@ -4,6 +4,7 @@ History
 
 Development on GitHub
 =====================
+* minor optimise the codes for vireoSNP.utils.vcf_utils.parse_donor_GPb
 
 Release v0.5.7 (24/03/2022)
 ===========================
