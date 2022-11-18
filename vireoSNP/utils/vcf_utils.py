@@ -375,3 +375,74 @@ def match_VCF_samples(VCF_file1, VCF_file2, GT_tag1, GT_tag2):
     RV['matched_n_var'] = len(GPb0_var_ids_use)
     
     return RV
+
+
+def snp_gene_match(varFixedINFO, gene_df, gene_key='gene', multi_gene=True,
+                   gaps=[0, 1000, 10000, 100000], verbose=False):
+    """Match genes for given list of SNPs.
+    This function benefits from grouped chromosomes in the variants list.
+    
+    parameters
+    ----------
+    varFixedINFO: dictionary, from vireoSNP.load_VCF()
+        has keys of 'CHROM', 'POS'
+    gene_df: pandas.DataFrame
+        has columns in order: chrom, start, stop, gene [, others]
+    gene_key: string
+        the column key in gene_df for gene name
+    multi_gene: bool
+        If True, support all overlapped genes, otherwise, only one in the most
+        central gene
+    gaps: list of int
+        the distance between a gene and the query SNP
+    verbose: bool
+        If True, print log info
+        
+    returns
+    -------
+    (gene_list, flag_list)
+    gene_list is a list of gene list, for each variants it may have
+    one or multiple overlapped genes or None.
+    flag_list is a list of distance flag. 0: overlapped, 
+    1: within 1KB, 2: within 10KB, 3: within 100KB, 4: no cis gene
+    """
+    chrom_cur = 'None'
+    gene_list = []
+    flag_list = []
+
+    for i in range(len(varFixedINFO['CHROM'])):
+        _chrom = varFixedINFO['CHROM'][i]
+        _pos = int(varFixedINFO['POS'][i])
+
+        if chrom_cur != _chrom:
+            gene_use = gene_df[gene_df['chrom'] == _chrom]
+            chrom_cur = _chrom
+            if verbose:
+                print('processing:', _chrom)
+            
+        for k, _gap in enumerate(gaps):
+            flag = k
+            _dist1 = gene_use['start'].values - _pos
+            _dist2 = gene_use['stop'].values - _pos
+            _distP = np.stack((_dist1, _dist2), axis=-1)
+            
+            _sign = np.sign(_dist1) * np.sign(_dist2)
+            _dist = _sign * np.min(np.abs(_distP), axis=1)
+
+            idx_chrom = np.where(_dist < _gap)[0]
+            if len(idx_chrom) > 0:
+                if _gap > 0 or multi_gene is False:
+                    # for cis gene, only return the nearest one
+                    # for overlapped genes, return the most central one (when
+                    # not in multi_gene mode)
+                    idx_chrom = [idx_chrom[np.argmin(_dist[idx_chrom])]]
+                break
+        
+        if len(idx_chrom) == 0:
+            flag = len(gaps)
+
+        #print(i, idx_chrom, gene_use.index.values[idx_chrom])
+        gene_list.append(gene_use[gene_key].values[idx_chrom])
+        flag_list.append(flag)
+
+    return gene_list, flag_list
