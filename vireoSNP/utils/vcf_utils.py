@@ -236,6 +236,11 @@ def write_VCF(out_file, VCF_dat, GenoTags=['GT', 'AD', 'DP', 'PL']):
         out_file_use = out_file.split(".gz")[0]
     else:
         out_file_use = out_file
+
+    if "samples" not in VCF_dat:
+        VCF_dat["samples"] = []
+        if GenoTags != []:
+            print("No sample available: GenoTags will be ignored.")
         
     fid_out = open(out_file_use, "w")
     for line in VCF_dat['comments']:
