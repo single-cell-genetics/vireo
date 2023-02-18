@@ -4,6 +4,10 @@ History
 
 Development on GitHub
 =====================
+
+
+Release v0.5.8 (18/02/2023)
+===========================
 * fix issue with None in match() and match_SNPs() when w/ chr w/o chr have partial match
 * minor optimise the codes for vireoSNP.utils.vcf_utils.parse_donor_GPb
 * add a snp_gene_match() function
