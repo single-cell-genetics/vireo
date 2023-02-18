@@ -4,24 +4,14 @@ import numpy as np
 from scipy.io import mmread
 from itertools import permutations
 
-from .vireo_base import match
 from .vcf_utils import load_VCF, write_VCF, parse_donor_GPb
-from .vcf_utils import read_sparse_GeneINFO, GenoINFO_maker
-
+from .vcf_utils import read_sparse_GeneINFO, GenoINFO_maker, match_SNPs
 
 def match_donor_VCF(cell_dat, donor_vcf):
     """Match variants between cell VCF and donor VCF information
     """
-    mm_idx = match(cell_dat['variants'], donor_vcf['variants'])
-    mm_idx = mm_idx.astype(float)
-    if np.sum(mm_idx == mm_idx) == 0 or np.sum(mm_idx >= 0) == 0:
-        _cell_id = ["chr" + x for x in cell_dat['variants']]
-        mm_idx = match(_cell_id, donor_vcf['variants'])
-    if np.sum(mm_idx == mm_idx) == 0 or np.sum(mm_idx >= 0) == 0:
-        _donor_id = ["chr" + x for x in donor_vcf['variants']]
-        mm_idx = match(cell_dat['variants'], _donor_id)
-
-    idx1 = np.where(mm_idx == mm_idx)[0] #remove None
+    mm_idx = match_SNPs(cell_dat['variants'], donor_vcf['variants'])
+    idx1 = np.where(mm_idx != None)[0] #remove None
     # TODO: check when chr is not compatible! given warning.
     if len(idx1) == 0:
         print("[vireo] warning: no variants matched to donor VCF, " + 

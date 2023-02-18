@@ -311,6 +311,20 @@ def parse_donor_GPb(GT_dat, tag='GT', min_prob=0.0):
     return GT_prob
 
 
+def match_SNPs(SNP_ids1, SNPs_ids2):
+    """Match variants with considering using or not using chr prefix
+    Please check vireoSNP.match() for more details on handling None values.
+    """
+    mm_idx = match(SNP_ids1, SNPs_ids2)
+    if np.mean(mm_idx == None) == 1:
+        _SNP_ids1 = ["chr" + x for x in SNP_ids1]
+        mm_idx = match(_SNP_ids1, SNPs_ids2)
+    if np.mean(mm_idx == None) == 1:
+        _SNP_ids2 = ["chr" + x for x in SNPs_ids2]
+        mm_idx = match(SNP_ids1, _SNP_ids2)
+    return mm_idx
+
+
 def match_VCF_samples(VCF_file1, VCF_file2, GT_tag1, GT_tag2):
     """Match donors in two VCF files. Please subset the VCF with bcftools first,
     as it is more computationally efficient:
@@ -347,9 +361,8 @@ def match_VCF_samples(VCF_file1, VCF_file2, GT_tag1, GT_tag2):
     print('Shape for Geno Prob in VCF2:', GPb0_tensor.shape)
 
     # Match variants
-    mm_idx = match(GPb1_var_ids, GPb0_var_ids)
-    mm_idx = mm_idx.astype(float)
-    idx1 = np.where(mm_idx == mm_idx)[0] #remove None for unmatched
+    mm_idx = match_SNPs(GPb1_var_ids, GPb0_var_ids)
+    idx1 = np.where(mm_idx != None)[0] #remove None for unmatched
     idx2 = mm_idx[idx1].astype(int)
 
     GPb1_var_ids_use = GPb1_var_ids[idx1]
@@ -358,7 +371,7 @@ def match_VCF_samples(VCF_file1, VCF_file2, GT_tag1, GT_tag2):
 
     GPb1_tensor_use = GPb1_tensor[idx1]
     GPb0_tensor_use = GPb0_tensor[idx2]
-    print("n_variants in VCF1, VCF2 and matchd: %d, %d, %d" 
+    print("n_variants in VCF1, VCF2 and matched: %d, %d, %d" 
         %(GPb0_var_ids.shape[0], GPb1_var_ids.shape[0], len(idx1))
     )
 

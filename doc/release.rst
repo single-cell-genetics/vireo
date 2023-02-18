@@ -4,6 +4,7 @@ History
 
 Development on GitHub
 =====================
+* fix issue with None in match() and match_SNPs() when w/ chr w/o chr have partial match
 * minor optimise the codes for vireoSNP.utils.vcf_utils.parse_donor_GPb
 * add a snp_gene_match() function
 * fix issue in write_VCF() when there is no samples
