@@ -4,7 +4,7 @@ History
 
 Development on GitHub
 =====================
-
+* fix bug with GT_tag2 in `match_VCF_samples()` function
 
 Release v0.5.8 (18/02/2023)
 ===========================

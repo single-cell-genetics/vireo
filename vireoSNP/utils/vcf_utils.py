@@ -356,21 +356,21 @@ def match_VCF_samples(VCF_file1, VCF_file2, GT_tag1, GT_tag2):
         VCF_file2, biallelic_only=True, sparse=False, format_list=[GT_tag2])
     GPb1_var_ids = np.array(vcf_dat1['variants'])
     GPb1_donor_ids = np.array(vcf_dat1['samples'])
-    GPb1_tensor = parse_donor_GPb(vcf_dat1['GenoINFO'][GT_tag1], GT_tag1)
+    GPb1_tensor = parse_donor_GPb(vcf_dat1['GenoINFO'][GT_tag2], GT_tag2)
     GPb1_tensor.shape
-    print('Shape for Geno Prob in VCF2:', GPb0_tensor.shape)
+    print('Shape for Geno Prob in VCF2:', GPb1_tensor.shape)
 
     # Match variants
     mm_idx = match_SNPs(GPb1_var_ids, GPb0_var_ids)
     idx1 = np.where(mm_idx != None)[0] #remove None for unmatched
-    idx2 = mm_idx[idx1].astype(int)
+    idx0 = mm_idx[idx1].astype(int)
 
     GPb1_var_ids_use = GPb1_var_ids[idx1]
-    GPb0_var_ids_use = GPb0_var_ids[idx2]
+    GPb0_var_ids_use = GPb0_var_ids[idx0]
     # print(np.mean(GPb0_var_ids_use == GPb1_var_ids_use))
 
     GPb1_tensor_use = GPb1_tensor[idx1]
-    GPb0_tensor_use = GPb0_tensor[idx2]
+    GPb0_tensor_use = GPb0_tensor[idx0]
     print("n_variants in VCF1, VCF2 and matched: %d, %d, %d" 
         %(GPb0_var_ids.shape[0], GPb1_var_ids.shape[0], len(idx1))
     )
