@@ -96,7 +96,7 @@ def pool_barcodes(barcodes, out_dir, doublet_rate=None, sample_suffix=True,
 
 
 def fetch_reads(samFile_list, chroms, positions, outbam, 
-                barcodes_in, barcodes_out=None, cell_tag='CB'):
+                barcodes_in, barcodes_out=None, cell_tag='CB'), test=-1:
     print('running fetch reads with vcf')
     """
     """
@@ -115,6 +115,7 @@ def fetch_reads(samFile_list, chroms, positions, outbam,
         reads_all_test =[]
         npostot=len(positions)
         for i in range(npostot):
+            if test>0 and ii>test:break
             if int(i+1) % 10000 == 0:
                 print("BAM: {} positions read: {:.2f}M   percent: {:.2f}%   reads stored: {}" .format(jobname.split('/')[-1], (i+1)/1000000, float(100*(i+1))/float(npostot), len(reads_all)))
             chrom = chroms[i]
@@ -208,12 +209,13 @@ def main():
     parser.add_option("--outDir", "-o", dest="out_dir", default=None,
         help=("Directory for output files: pooled.bam and barcodes_pool.tsv."))
     parser.add_option("--nproc", "-p", type="int", dest="nproc", default=1,
-        help="Number of subprocesses. This will create <nproc>*<samFiles> subprocesses. For example with nproc=10 and 3 input bam/sam files, 30 sub jobs will be created [default: %default]")
+        help="Number of subprocesses. This will create <nproc>*<samFiles> subprocesses. For example with nproc=10 and 3 input bam/sam files, 30 sub jobs will be created. When running with --merge, this will send a job per file if it is >1 [default: %default]")
     parser.add_option("--merge", "-m", action="store_true", default=False,
         help="Merge instead of fetch [default: %default]")
     parser.add_option("--shuffle", action="store_true", default=False,
         help="Shuffle the positions, only works on MT [default: %default]")
-
+    parser.add_option("--test", dest="testval", default=-1,
+        help="Set it to a value >0 to run only <test> read [default: %default]")
     
     group = OptionGroup(parser, "Cell barcodes sampling")
     group.add_option("--nCELL", type="int", dest="n_cell", default=None, 
@@ -347,7 +349,7 @@ def main():
             ## remove duplicates
             print("removing duplicates  : {}".format(str(datetime.timedelta(seconds=time.time()-start))))
             for ii in range(len(samFile_list)):
-                outbam = pysam.AlignmentFile(out_dir + "/pooled_temp_File{}.bam".format(ii), "wb", template=check_pysam_chrom(out_dir + "/pooled_temp_File0_Pos0.bam", chroms[0])[0])
+                outbam = pysam.AlignmentFile(out_dir + "/pooled_temp_File{}.bam".format(ii), "wb", template=check_pysam_chrom(out_dir + "/pooled_temp_File{}_Pos0.bam".format(ii), chroms[0])[0])
                 index={}
                 count=0
                 goodread=0
