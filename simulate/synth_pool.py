@@ -117,7 +117,8 @@ def fetch_reads(samFile_list, chroms, positions, outbam,
         for i in range(npostot):
             if test>0 and ii>test:break
             if int(i+1) % 10000 == 0:
-                print("BAM: {} positions read: {:.2f}M   percent: {:.2f}%   reads stored: {}" .format(jobname.split('/')[-1], (i+1)/1000000, float(100*(i+1))/float(npostot), len(reads_all)))
+                if test<0: print("BAM: {} positions read: {:.2f}M   percent: {:.2f}%   reads stored: {}" .format(jobname.split('/')[-1], (i+1)/1000000, float(100*(i+1))/float(npostot), len(reads_all)))
+                else: print("BAM: {} positions read: {:.2f}M   percent: {:.2f}%   reads stored: {}" .format(jobname.split('/')[-1], (i+1)/1000000, float(100*(i+1))/float(test), len(reads_all)))
             chrom = chroms[i]
             POS = positions[i]
             read=0
@@ -315,7 +316,7 @@ def main():
         if (options.nproc == 1):
             BAM_FILE = out_dir + "/pooled.bam"
             fetch_reads(samFile_list, chroms, positions, 
-                        BAM_FILE, barcodes_in, barcodes_out)
+                        BAM_FILE, barcodes_in, barcodes_out, test=options.test)
 
         elif (options.nproc > 1):
             result = []
@@ -340,7 +341,7 @@ def main():
                     BAM_FILE = out_dir + "/pooled_temp_File{}_Pos{}.bam".format(ii,n)
                     result.append(pool.apply_async(fetch_reads, ([samFile_list[ii]], 
                                                                  chroms[posrange[n][0]:posrange[n][1]], positions[posrange[n][0]:posrange[n][1]], BAM_FILE, [barcodes_in[ii]], 
-                                                                 [barcodes_out[ii]], "CB"), callback=show_progress))
+                                                                 [barcodes_out[ii]], "CB", test=options.test), callback=show_progress))
 
             pool.close()
             pool.join()
