@@ -96,7 +96,7 @@ def pool_barcodes(barcodes, out_dir, doublet_rate=None, sample_suffix=True,
 
 
 def fetch_reads(samFile_list, chroms, positions, outbam, 
-                barcodes_in, barcodes_out=None, cell_tag='CB', test=-1):
+                barcodes_in, barcodes_out=None, cell_tag='CB', test_val=-1):
     print('running fetch reads with vcf')
     """
     """
@@ -115,10 +115,10 @@ def fetch_reads(samFile_list, chroms, positions, outbam,
         reads_all_test =[]
         npostot=len(positions)
         for i in range(npostot):
-            if test>0 and ii>test:break
+            if test_val>0 and ii>test:break
             if int(i+1) % 10000 == 0:
                 if test<0: print("BAM: {} positions read: {:.2f}M   percent: {:.2f}%   reads stored: {}" .format(jobname.split('/')[-1], (i+1)/1000000, float(100*(i+1))/float(npostot), len(reads_all)))
-                else: print("BAM: {} positions read: {:.2f}M   percent: {:.2f}%   reads stored: {}" .format(jobname.split('/')[-1], (i+1)/1000000, float(100*(i+1))/float(test), len(reads_all)))
+                else: print("BAM: {} positions read: {:.2f}M   percent: {:.2f}%   reads stored: {}" .format(jobname.split('/')[-1], (i+1)/1000000, float(100*(i+1))/float(test_val), len(reads_all)))
             chrom = chroms[i]
             POS = positions[i]
             read=0
@@ -215,7 +215,7 @@ def main():
         help="Merge instead of fetch [default: %default]")
     parser.add_option("--shuffle", action="store_true", default=False,
         help="Shuffle the positions, only works on MT [default: %default]")
-    parser.add_option("--test", dest="testval", default=-1,
+    parser.add_option("--test", dest="test_val", default=-1,
         help="Set it to a value >0 to run only <test> read [default: %default]")
     
     group = OptionGroup(parser, "Cell barcodes sampling")
@@ -341,7 +341,7 @@ def main():
                     BAM_FILE = out_dir + "/pooled_temp_File{}_Pos{}.bam".format(ii,n)
                     result.append(pool.apply_async(fetch_reads, ([samFile_list[ii]], 
                                                                  chroms[posrange[n][0]:posrange[n][1]], positions[posrange[n][0]:posrange[n][1]], BAM_FILE, [barcodes_in[ii]], 
-                                                                 [barcodes_out[ii]], "CB", test=options.test), callback=show_progress))
+                                                                 [barcodes_out[ii]], "CB", test_val=options.test_val), callback=show_progress))
 
             pool.close()
             pool.join()
