@@ -316,7 +316,7 @@ def main():
         if (options.nproc == 1):
             BAM_FILE = out_dir + "/pooled.bam"
             fetch_reads(samFile_list, chroms, positions, 
-                        BAM_FILE, barcodes_in, barcodes_out, test=options.test)
+                        BAM_FILE, barcodes_in, barcodes_out, test_val=options.test_val)
 
         elif (options.nproc > 1):
             result = []
@@ -341,7 +341,7 @@ def main():
                     BAM_FILE = out_dir + "/pooled_temp_File{}_Pos{}.bam".format(ii,n)
                     result.append(pool.apply_async(fetch_reads, ([samFile_list[ii]], 
                                                                  chroms[posrange[n][0]:posrange[n][1]], positions[posrange[n][0]:posrange[n][1]], BAM_FILE, [barcodes_in[ii]], 
-                                                                 [barcodes_out[ii]], "CB", test_val=options.test_val), callback=show_progress))
+                                                                 [barcodes_out[ii]], "CB", options.test_val), callback=show_progress))
 
             pool.close()
             pool.join()
