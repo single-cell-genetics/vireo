@@ -105,14 +105,8 @@ def fetch_reads(samFile_list, chroms, positions, outbam,
     outbam = pysam.AlignmentFile(outbam, "wb", template=samFile_list[0])
     if barcodes_out is None:
         barcodes_out = barcodes_in.copy()
-    
-
-    print ('N positions     : ',len(positions))
-    print ('First positions : ',positions[0])
-    print ('Last positions  : ',positions[-1])
  
     for ss in range(len(samFile_list)):
-        print('file {} out of {} type {}'.format(ss+1,len(samFile_list), samFile_list[ss]))
         samFile = samFile_list[ss]
         _barcodes_in = barcodes_in[ss]
         _barcodes_out = barcodes_out[ss]
