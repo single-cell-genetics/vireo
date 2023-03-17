@@ -97,7 +97,6 @@ def pool_barcodes(barcodes, out_dir, doublet_rate=None, sample_suffix=True,
 
 def fetch_reads(samFile_list, chroms, positions, outbam, 
                 barcodes_in, barcodes_out=None, cell_tag='CB', test_val=-1):
-    print('running fetch reads with vcf')
     """
     """
     jobname=outbam
@@ -304,6 +303,8 @@ def main():
 
 
     if not options.merge:
+        print('running fetch reads with vcf')
+
         ## VCF file
         vcf_dat = load_VCF(options.region_file, biallelic_only=False, 
                            load_sample=False)
