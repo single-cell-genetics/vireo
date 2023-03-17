@@ -96,7 +96,7 @@ def pool_barcodes(barcodes, out_dir, doublet_rate=None, sample_suffix=True,
 
 
 def fetch_reads(samFile_list, chroms, positions, outbam, 
-                barcodes_in, barcodes_out=None, cell_tag='CB'), test=-1:
+                barcodes_in, barcodes_out=None, cell_tag='CB', test=-1):
     print('running fetch reads with vcf')
     """
     """
