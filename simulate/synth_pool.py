@@ -204,14 +204,14 @@ def main():
         default=None, help=("Input barcode files, comma separated."))
     parser.add_option("--regionFile", "-r", dest="region_file", 
         default=None, help=("Input SNP list."))
+    parser.add_option("--noregionFile", action="store_true", default=False,
+        help="Run the synthetic pooling without a given list of variant, mutually exclusive with --regionFile [default: %default]")
     parser.add_option("--doubletRate", "-d", dest="doublet_rate", 
         type="float", default=None, help=("Doublet rate [default: n/100000]"))
     parser.add_option("--outDir", "-o", dest="out_dir", default=None,
         help=("Directory for output files: pooled.bam and barcodes_pool.tsv."))
     parser.add_option("--nproc", "-p", type="int", dest="nproc", default=1,
-        help="Number of subprocesses. This will create <nproc>*<samFiles> subprocesses. For example with nproc=10 and 3 input bam/sam files, 30 sub jobs will be created. When running with --merge, this will send a job per file if it is >1 [default: %default]")
-    parser.add_option("--merge", "-m", action="store_true", default=False,
-        help="Merge instead of fetch [default: %default]")
+        help="Number of subprocesses. This will create <nproc>*<samFiles> subprocesses. For example with nproc=10 and 3 input bam/sam files, 30 sub jobs will be created. When running with --noregionFile, this will send a job per file if it is >1 [default: %default]")
     parser.add_option("--shuffle", action="store_true", default=False,
         help="Shuffle the positions, only works on MT [default: %default]")
     parser.add_option("--test", dest="test_val", default=-1,
@@ -227,6 +227,10 @@ def main():
     parser.add_option_group(group)
 
     (options, args) = parser.parse_args()
+
+    if options.noregionFile and options.region_file:
+        parser.error("options --regionFile (-r) and --noregionFile are mutually exclusive")
+
     if len(sys.argv[1:]) == 0:
         print("Welcome to VCF_convert!\n")
         print("use -h or --help for help on argument.")
@@ -274,7 +278,7 @@ def main():
     barcodes_out = pool_barcodes(barcodes_in, out_dir, options.doublet_rate, 
         seed=options.random_seed)
  
-    if options.merge:
+    if options.noregionFile:
         if (options.nproc == 1):
             BAM_FILE = out_dir + "/pooled.bam"
             merge_bams(samFile_list,BAM_FILE, barcodes_in, barcodes_out)
@@ -302,7 +306,7 @@ def main():
             print("")
 
 
-    if not options.merge:
+    if not options.noregionFile:
         print('running fetch reads with vcf')
 
         ## VCF file
