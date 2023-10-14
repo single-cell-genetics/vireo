@@ -74,3 +74,18 @@ mixture model
 .. autoclass:: vireoSNP.BinomMixtureVB
    :members: __init__, set_initial, set_prior, fit
 
+
+VireoBulk Object
+----------------
+
+Objects of type :class:`~vireoSNP.VireoBulk` for clustering with binomial
+mixture model
+
+.. autoclass:: vireoSNP.VireoBulk
+   :members: __init__, fit, LR_test
+
+
+LikRatio_test
+~~~~~~~~~~~~~
+
+.. autofunction:: vireoSNP.LikRatio_test
