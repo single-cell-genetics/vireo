@@ -117,6 +117,27 @@ def empty_input_write_donor_id(out_dir, donor_ids):
     fid.writelines("\t".join(DONOR_ID_HEADER) + "\n")
     fid.close()
 
+    ## save log file
+    fid = open(out_dir + "/_log.txt", "w")
+    fid.writelines("Warning: INPUT VCF FILE EMPTY!")
+    fid.writelines("Mock outputs generated")
+    fid.close()
+
+    ## save singlet probability file
+    fid = open(out_dir + "/prob_singlet.tsv", "w")
+    fid.close()
+
+    ## save doublet probability file
+    fid = open(out_dir + "/prob_doublet.tsv", "w")
+    fid.close()
+
+    bashCommand = "gzip -f %s %s" % (
+        out_dir + "/prob_singlet.tsv",
+        out_dir + "/prob_doublet.tsv",
+    )
+    pro = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+    pro.communicate()[0]
+
 
 def write_donor_id(out_dir, donor_names, cell_names, n_vars, res_vireo):
     """

@@ -305,7 +305,12 @@ def main():
         donor_names = ["donor%d" % x for x in range(n_donor)]
 
     if len(cell_dat["variants"]) == 0:
+        print("WARNING: no variants in the input data found!")
+        print("WARNING: mocking outputs")
         empty_input_write_donor_id(out_dir, donor_names)
+        print(
+            "WARNING: Run finished, results mocked because input mutations were empty"
+        )
         return
 
     n_vars = np.array(np.sum(cell_dat["DP"] > 0, axis=0)).reshape(-1)
