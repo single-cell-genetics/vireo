@@ -255,7 +255,6 @@ def main():
     ## input donor genotype
     n_donor = options.n_donor
 
-    print((options.donor_file is not None) & (n_donor is not None))
     if options.donor_file is not None:
         if "variants" not in cell_dat.keys():
             print("No variants information is loaded, please provide base.vcf.gz")
@@ -283,10 +282,7 @@ def main():
         donor_GPb = parse_donor_GPb(
             donor_vcf["GenoINFO"][options.geno_tag], options.geno_tag
         )
-        if donor_GPb is None:
-            learn_GT = False
-            donor_GPb = None
-            donor_names = ["donor%d" % x for x in range(n_donor)]
+
         if n_donor is None or n_donor == donor_GPb.shape[1]:
             n_donor = donor_GPb.shape[1]
             donor_names = donor_vcf["samples"]
