@@ -77,9 +77,9 @@ def predict_doublet(vobj, AD, DP, update_GT=True, update_ID=True,
             print("For update_GT, please turn on update_ID.")
     
     prob_doublet = ID_prob_both[:, vobj.n_donor:]
-    prob_signlet = ID_prob_both[:, :vobj.n_donor]
+    prob_singlet = ID_prob_both[:, :vobj.n_donor]
     
-    return prob_doublet, prob_signlet, logLik_ratio
+    return prob_doublet, prob_singlet, logLik_ratio
 
 
 def add_doublet_theta(beta_mu, beta_sum):

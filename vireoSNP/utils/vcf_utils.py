@@ -241,15 +241,40 @@ def write_VCF(out_file, VCF_dat, GenoTags=['GT', 'AD', 'DP', 'PL']):
         VCF_dat["samples"] = []
         if GenoTags != []:
             print("No sample available: GenoTags will be ignored.")
-        
+
     fid_out = open(out_file_use, "w")
+
     for line in VCF_dat['comments']:
-        fid_out.writelines(line + "\n")
-    
-    VCF_COLUMN = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", 
+        tag_found = False
+        if line.startswith("##FORMAT=<ID="):
+            for tag in GenoTags:
+                if line.startswith("##FORMAT=<ID=" + tag):
+                    tag_found = True
+        if not tag_found:
+            fid_out.writelines(line + "\n")
+
+    for tag in GenoTags:
+        if tag == "GT":
+            fid_out.writelines(
+                '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+            )
+        elif tag == "AD":
+            fid_out.writelines(
+                '##FORMAT=<ID=AD,Number=1,Type=Integer,Description="Read depth for each allele">\n'
+            )
+        elif tag == "DP":
+            fid_out.writelines(
+                '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">\n'
+            )
+        elif tag == "PL":
+            fid_out.writelines(
+                '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Phred-scaled genotype likelihoods">\n'
+            )
+
+    VCF_COLUMN = ["CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER",
                   "INFO", "FORMAT"]
     fid_out.writelines("#" + "\t".join(VCF_COLUMN + VCF_dat['samples']) + "\n")
-    
+
     for i in range(len(VCF_dat['variants'])):
         line = [VCF_dat['FixedINFO'][x][i] for x in VCF_COLUMN[:8]]
         line.append(":".join(GenoTags))
@@ -270,7 +295,7 @@ def write_VCF(out_file, VCF_dat, GenoTags=['GT', 'AD', 'DP', 'PL']):
     pro = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     pro.communicate()[0]
 
-    
+
 def parse_donor_GPb(GT_dat, tag='GT', min_prob=0.0):
     """
     Parse the donor genotype probability
