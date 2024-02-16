@@ -19,6 +19,9 @@ mixture:
   same sample 3.
 * For all BAM files, only keep the reads covering the given variants by using 
   ``--regionFile`` in VCF format
+* In case you do not have a VCF file with given variants or if you need to be 
+  more inclusive in your variant choice, you can use the ``--noregionFile`` option 
+  instead of ``--regionFile`` (those two are mutually exclusive)
 * Extra cells are added to the same number of singletons to generate doublets. 
   The number of doublets are defined by the total cells and the doublet rate
   ``--doubletRate``
@@ -32,27 +35,36 @@ For details of all arguments: type ``python synth_pool.py  -h``
 
 .. code-block:: html
 
-   Usage: synth_pool.py [options]
+  Usage: synth_pool.py [options]
 
-   Options:
+  Options:
     -h, --help            show this help message and exit
     -s SAM_FILES, --samFiles=SAM_FILES
-                            Input sam files, comma separated.
+                          Input bam or sam files, comma separated.
     -b BARCODES_FILES, --barcodeFiles=BARCODES_FILES
-                            Input barcode files, comma separated.
+                          Input barcode files, comma separated.
     -r REGION_FILE, --regionFile=REGION_FILE
-                            Input SNP list.
+                          Input SNP list.
+    --noregionFile        Run the synthetic pooling without a given list of 
+                          variant, mutually exclusive with --regionFile [default: False]
     -d DOUBLET_RATE, --doubletRate=DOUBLET_RATE
-                            Doublet rate [default: n/100000]
+                          Doublet rate [default: n/100000]
     -o OUT_DIR, --outDir=OUT_DIR
-                            Directory for output files: pooled.bam and
-                            barcodes_pool.tsv.
+                          Directory for output files: pooled.bam and
+                          barcodes_pool.tsv.
     -p NPROC, --nproc=NPROC
-                            Number of subprocesses [default: 1]
+                          Number of subprocesses. This will create
+                          <nproc>*<samFiles> subprocesses. For example with
+                          nproc=10 and 3 input bam/sam files, 30 sub jobs will
+                          be created. When running with --noregionFile, this will send
+                          a job per file if it is >1 [default: 1]
+    --shuffle             Shuffle the positions, only works on MT [default:
+                          False]
+    --test=TEST_VAL       Set it to a value >0 to run only <test> read [default:-1]
 
     Cell barcodes sampling:
-        --nCELL=N_CELL      The number of cells in each sample [default: none]
-        --minorSAMPLE=MINOR_SAMPLE
-                            Ratio size of minor sample [default: 1.0]
-        --randomSEED=RANDOM_SEED
-                            The random seed in numpy [default: none]
+      --nCELL=N_CELL      The number of cells in each sample [default: none]
+      --minorSAMPLE=MINOR_SAMPLE
+                          Ratio size of minor sample [default: 1.0]
+      --randomSEED=RANDOM_SEED
+                          The random seed in numpy [default: none]
