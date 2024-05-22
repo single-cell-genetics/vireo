@@ -34,7 +34,7 @@ from shutil import copyfile
 
 notebooks_url = "../examples/"
 notebooks = [
-    "vireoSNP_clones.ipynb",
+    "vireoSNP_clones-mkn45.ipynb",
 ]
 for nb in notebooks:
     try:

@@ -104,4 +104,4 @@ demultiplexing of pooled single-cell RNA-seq data without genotype reference
     :maxdepth: 1
     :hidden:
  
-    vireoSNP_clones
+    vireoSNP_clones-mkn45
