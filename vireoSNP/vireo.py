@@ -141,26 +141,34 @@ def main():
         cell_dat['DP'] = cell_dat['DP'][:,cellRange[0]:cellRange[1]]
         cell_dat['samples'] = cell_dat['samples'][cellRange[0]:cellRange[1]]
 
+    if cell_dat['AD'].shape[0] == 0:
+        print("Error: cell data in vcf file, or cellSNP output folder, or "
+            "vartrix's alt.mtx,ref.mtx,barcodes.tsv does not contain any variants.")
+        sys.exit(1)
 
     ## input donor genotype
     n_donor = options.n_donor
     if options.donor_file is not None:
         if "variants" not in cell_dat.keys():
-            print("No variants information is loaded, please provide base.vcf.gz")
+            print("Error: No variants information is loaded, please provide base.vcf.gz")
             sys.exit(1)
 
         print("[vireo] Loading donor VCF file ...")
         donor_vcf = load_VCF(options.donor_file, biallelic_only=True,
                              sparse=False, format_list=[options.geno_tag])
-        
+
         if (donor_vcf['n_SNP_tagged'][0] < 
             (0.1 * len(donor_vcf['GenoINFO'][options.geno_tag]))):
-            print("[vireo] No " + options.geno_tag + " tag in donor genotype; "
+            print("Error: No " + options.geno_tag + " tag in donor genotype; "
                 "please try another tag for genotype, e.g., GT")
             print("        %s" %options.donor_file)
             sys.exit(1)
 
         cell_dat, donor_vcf = match_donor_VCF(cell_dat, donor_vcf)
+        if len(donor_vcf['GenoINFO'][options.geno_tag]) == 0:
+            print("Error: No matching variants found between cell data and donor VCF.")
+            sys.exit(1)
+
         donor_GPb = parse_donor_GPb(donor_vcf['GenoINFO'][options.geno_tag],
             options.geno_tag)
 
