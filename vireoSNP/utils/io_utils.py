@@ -2,7 +2,7 @@
 import subprocess
 import numpy as np
 from scipy.io import mmread
-from itertools import permutations
+from itertools import combinations
 
 from .vcf_utils import load_VCF, write_VCF, parse_donor_GPb
 from .vcf_utils import read_sparse_GeneINFO, GenoINFO_maker, match_SNPs
@@ -98,7 +98,7 @@ def write_donor_id(out_dir, donor_names, cell_names, n_vars, res_vireo):
     prob_doublet_out = np.max(doublet_prob, axis=1)
     donor_singlet = np.array(donor_names, "U100")[np.argmax(ID_prob, axis=1)]
 
-    doublet_names = [",".join(x) for x in permutations(donor_names, 2)]
+    doublet_names = [",".join(x) for x in combinations(donor_names, 2)]
     donor_doublet = np.array(doublet_names, "U100")[np.argmax(doublet_prob, 
                                                               axis=1)]
 
