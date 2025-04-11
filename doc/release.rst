@@ -4,6 +4,14 @@ History
 
 Development on GitHub
 =====================
+
+Release v0.5.9 (11/04/2025)
+===========================
+* fix bug in the header of doublet_prob.tsv.gz file (thanks to xueyazhou2017)
+* add VireoBulk API: https://vireosnp.readthedocs.io/en/latest/API.html
+* change the variants order in visualising MKN45 data (heatmap)
+* fix bug to remind zero variants and other file formating (thanks to ghuls)
+* fix multiple minor text issues (thanks to Clement Helsens)
 * fix bug with GT_tag2 in `match_VCF_samples()` function
 
 Release v0.5.8 (18/02/2023)
