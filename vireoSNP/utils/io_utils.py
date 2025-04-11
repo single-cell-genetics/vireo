@@ -95,7 +95,7 @@ def write_donor_id(out_dir, donor_names, cell_names, n_vars, res_vireo):
     ID_prob, doublet_prob = res_vireo['ID_prob'], res_vireo['doublet_prob']
 
     prob_max = np.max(ID_prob, axis=1)
-    prob_doublet_out = np.max(doublet_prob, axis=1)
+    prob_doublet_out = np.sum(doublet_prob, axis=1)
     donor_singlet = np.array(donor_names, "U100")[np.argmax(ID_prob, axis=1)]
 
     doublet_names = [",".join(x) for x in combinations(donor_names, 2)]
