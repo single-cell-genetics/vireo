@@ -208,7 +208,7 @@ class Vireo():
         SS_gt = DP @ self.ID_prob
         S2_gt = SS_gt - S1_gt
         
-        logLik_GT = np.zeros(self.GT_prior.shape)
+        logLik_GT = np.zeros(self.GT_prob.shape)
         for ig in range(self.n_GT):
             logLik_GT[:, :, ig] = (
                 S1_gt * self.digamma1_[:, :, ig] + 
@@ -273,7 +273,7 @@ class Vireo():
                 elif ELBO[it] - ELBO[it - 1] < epsilon_conv:
                     break
         
-        return ELBO[:it]
+        return ELBO[:it + 1]
 
     def fit(self, AD, DP, max_iter=200, min_iter=5, epsilon_conv=1e-2,
         delay_fit_theta=0, verbose=True, n_inits=50, nproc=1):
